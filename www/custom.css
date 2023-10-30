@@ -1,0 +1,26 @@
+.content-wrapper {
+    background-color: #ffffff;
+}
+
+h2 {
+  color: #253C59 ;
+  font-weight: bold;
+}
+
+/* alterando números do valuebox*/
+/* quando se inspeciona o código, o número fica numa classe "inner" que pode ser genérica,
+então, logo acima se encontra a classe "small-box", Assim se procura alterar o estilo da
+classe "inner" logo abaixo de um "small-box" com o sinal de > */
+
+
+.small-box > .inner{
+  font-size: 32px;
+
+  font-weight: bold;
+}
+
+.small-box-subtitle{
+
+font-weight: normal;
+
+}
