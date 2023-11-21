@@ -14,7 +14,7 @@ classe "inner" logo abaixo de um "small-box" com o sinal de > */
 
 
 .small-box > .inner{
-  font-size: 32px;
+  font-size: 30px;
 
   font-weight: bold;
 }
