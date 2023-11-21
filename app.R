@@ -105,7 +105,6 @@ library(bs4Dash)
          tabName = "vg_servidores",
          titlePanel("Visão Geral - Servidores"),
          hr(),
-         "teste",
          fluidRow(
            bs4ValueBoxOutput(
              "vg_serv_total",
@@ -166,6 +165,17 @@ library(bs4Dash)
            collapsible = FALSE,
            plotOutput("vg_serie_nr_lic")
          )
+
+       ),
+       # UI Casos -----------------------------------------------
+       #Fazer selects com:
+       #Grupo de CIDs
+       #Periodo
+       #Sexo: masculino/Feminino/Todos
+       #Lotação: Sercretaria/Cartório/Todos
+
+       bs4TabItem(
+
        )
 
      )
@@ -298,7 +308,7 @@ library(bs4Dash)
 
      bs4ValueBox(
        value = HTML(valor) ,
-       subtitle = "Total de licenças por sexo" ,
+       subtitle = "Total de licenças por lotação" ,
        # icon = icon("plane") ,
        color = "lightblue"
      )
