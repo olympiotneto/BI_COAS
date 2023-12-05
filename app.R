@@ -166,7 +166,7 @@ library(bs4Dash)
            plotOutput("vg_serie_nr_lic")
          )
 
-       ),
+       )
        # UI Casos -----------------------------------------------
        #Fazer selects com:
        #Grupo de CIDs
@@ -174,9 +174,9 @@ library(bs4Dash)
        #Sexo: masculino/Feminino/Todos
        #Lotação: Sercretaria/Cartório/Todos
 
-       bs4TabItem(
-
-       )
+       # bs4TabItem(
+       #
+       # )
 
      )
    )
