@@ -19,3 +19,9 @@ contar_linhas <- function(tab){
     ) |>
     pull(n)
 }
+
+#data atualização dos dados
+atualizacao <-
+  dados |>
+  slice_max(data_inicio_licenca) |>
+  pull(data_inicio_licenca)
