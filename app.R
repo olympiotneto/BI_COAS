@@ -104,6 +104,7 @@ library(bs4Dash)
        bs4TabItem(
          tabName = "vg_servidores",
          titlePanel("Visão Geral - Servidores"),
+       #glue::glue(" -  Atualizado até {format(as.Date(atualizacao), '%d-%m-%Y')}"
          hr(),
          fluidRow(
            bs4ValueBoxOutput(
@@ -127,8 +128,8 @@ library(bs4Dash)
            width = 12,
            title = "Servidores com licenças concedidas por ano",
            collapsible = FALSE,
-           plotOutput("vg_serie_nr_serv")
-       )
+           plotly::plotlyOutput("vg_serie_nr_serv")
+         )
        ),
        # UI VISAO GERAL LICENÇAS -----------------------------------------------
        ###Caixinhas de infos gerais no submenu licenças
@@ -163,10 +164,19 @@ library(bs4Dash)
            width = 12,
            title = "Número de licenças concedidas por ano",
            collapsible = FALSE,
-           plotOutput("vg_serie_nr_lic")
+           plotly::plotlyOutput("vg_serie_nr_lic")
          )
-
        )
+     ),
+     fluidRow(
+       column(2,
+              offset = 10,
+              glue::glue("Dados atualizados até {format(as.Date(atualizacao), '%d-%m-%Y')}")
+       )
+     )
+   )
+)
+
        # UI Casos -----------------------------------------------
        #Fazer selects com:
        #Grupo de CIDs
@@ -178,9 +188,6 @@ library(bs4Dash)
        #
        # )
 
-     )
-   )
- )
 
 
 
@@ -213,7 +220,7 @@ library(bs4Dash)
      bs4ValueBox(
        value = valor ,
        subtitle = "Total de servidores na base de dados" ,
-       # icon = icon("plane") ,
+       icon = icon("users"),
        color = "lightblue"
      )
 
@@ -233,7 +240,7 @@ library(bs4Dash)
      bs4ValueBox(
        value = HTML(valor) ,
        subtitle = "Total servidores por sexo" ,
-       # icon = icon("plane") ,
+       icon = icon("venus-mars"),
        color = "lightblue"
      )
 
@@ -254,7 +261,7 @@ library(bs4Dash)
      bs4ValueBox(
        value = HTML(valor) ,
        subtitle = "Total servidores por lotação" ,
-       # icon = icon("plane") ,
+       icon = icon("building"),
        color = "lightblue"
      )
 
@@ -269,7 +276,7 @@ library(bs4Dash)
      bs4ValueBox(
        value = valor ,
        subtitle = "Total de licenças na base de dados" ,
-       # icon = icon("plane") ,
+       icon = icon("users"),
        color = "lightblue"
      )
 
@@ -289,7 +296,7 @@ library(bs4Dash)
      bs4ValueBox(
        value = HTML(valor) ,
        subtitle = "Total de licenças por sexo" ,
-       # icon = icon("plane") ,
+       icon = icon("venus-mars"),
        color = "lightblue"
      )
 
@@ -309,7 +316,7 @@ library(bs4Dash)
      bs4ValueBox(
        value = HTML(valor) ,
        subtitle = "Total de licenças por lotação" ,
-       # icon = icon("plane") ,
+       icon = icon("building") ,
        color = "lightblue"
      )
 
@@ -317,8 +324,8 @@ library(bs4Dash)
 
    #Gráfico servidores/ano
 
-   output$vg_serie_nr_serv <- renderPlot({
-     dados |>
+   output$vg_serie_nr_serv <- plotly::renderPlotly({
+    p <-  dados |>
        mutate(ano = lubridate::year(data_inicio_licenca)) |>
        summarise(Freq = n_distinct(codigo),.by = ano) |>
        filter(!is.na(ano)) |>
@@ -328,19 +335,23 @@ library(bs4Dash)
        scale_x_continuous(name="Ano",breaks = seq(2004,2023,1))+
        theme_classic() +
        theme(axis.text.x = element_text(angle = 60, vjust = .5))
+
+    plotly::ggplotly(p)
    })
 
-   output$vg_serie_nr_lic <- renderPlot({
-     dados |>
+   output$vg_serie_nr_lic <- plotly::renderPlotly({
+     p <- dados |>
        mutate(ano = lubridate::year(data_inicio_licenca)) |>
        summarise(Freq = n(),.by = ano) |>
        filter(!is.na(ano)) |>
-       ggplot(aes(x = ano, y = Freq)) +
+      ggplot(aes(x = ano, y = Freq)) +
        geom_bar(stat = "identity", fill = cores_Assec[2], position = "dodge")+
        ylab("Nº servidores") +
        scale_x_continuous(name="Ano",breaks = seq(2004,2023,1))+
        theme_classic() +
        theme(axis.text.x = element_text(angle = 60, vjust = .5))
+
+     plotly::ggplotly(p)
    })
 
  }
