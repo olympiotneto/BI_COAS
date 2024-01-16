@@ -24,3 +24,10 @@ classe "inner" logo abaixo de um "small-box" com o sinal de > */
 font-weight: normal;
 
 }
+
+.card-title{
+ float: left;
+ font-size: 35pt;
+ font-weight: bold;
+ margin: 0;
+}

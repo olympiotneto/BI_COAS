@@ -5,12 +5,22 @@ library(bs4Dash)
 dados <- readRDS("data/dados.RDS")
 cid_cat <- readRDS("data/Cid_cat.RDS")
 cid_sub <- readRDS("data/Cid_sub.RDS")
+opcoes_cat <- setNames(cid_cat$cat,paste(cid_cat$cat,cid_cat$descricao, sep="-"))
 
-#data atualização dos dados
+#data atualização dos dados  ( ultima data dos dados)
 atualizacao <-
   dados |>
   slice_max(data_inicio_licenca) |>
-  pull(data_inicio_licenca)
+  pull(data_inicio_licenca) |>
+  unique()
+
+#data atualização dos dados  ( primeira data dos dados)
+data_inicial <-
+  dados |>
+  slice_min(data_inicio_licenca) |>
+  pull(data_inicio_licenca) |>
+  unique()
+
 
 ####Versão bs4Dash
 
@@ -53,6 +63,12 @@ ui <- bs4DashPage(
       )
     )
   ),
+
+  # Rodapé ------------------------------------------------------------------
+
+  footer = bs4DashFooter(left = NULL,
+                         right =  glue::glue("Dados atualizados até {format(as.Date(atualizacao), '%d-%m-%Y')}"),
+                         fixed = TRUE),
   # BODY --------------------------------------------------------------------
   body = bs4DashBody(
     tags$head(
@@ -179,28 +195,78 @@ ui <- bs4DashPage(
       #Periodo
       #Sexo: masculino/Feminino/Todos
       #Lotação: Sercretaria/Cartório/Todos
+      #situação funcional
       bs4TabItem(
         tabName = "casos",
-        titlePanel("Casos"),
         fluidRow(
-          column(12,
-                 selectizeInput(
-                   inputId = "cid_cat",
-                   label = "Escolha uma ou mais categoria(s) de CID",
-                   choices =  NULL,
-                   multiple = TRUE,
-                   #selectize = TRUE,
-                   #options = list(maxOptions = 10)
-                 )
-                 )
+          bs4Card(
+            title = "Filtros",
+            width = 12,
+            fluidRow(
+              column(
+                5,
+                shinyWidgets::pickerInput(
+                  inputId = "cid_cat",
+                  label = "Escolha uma ou mais categoria(s) de CID",
+                  choices = opcoes_cat,
+                  selected = "Z76",
+                  options = shinyWidgets::pickerOptions(
+                    actionsBox = TRUE,
+                    deselectAllText = "desmarcar tudo",
+                    selectAllText = "marcar tudo",
+                    liveSearch = TRUE,
+                    noneSelectedText = "Nenhum CID selecionado",
+                    virtualScroll = 100,
+                    width = 600,
+                    size = 5,
+                    header = "Escolha um CID",
+                    hideDisabled = FALSE
+                  ),
+                  multiple = TRUE
+                )
+              ),
+              column(
+                5,
+                dateRangeInput(
+                  inputId = "casos_data",
+                  label ="Selecione as datas",
+                  start = "2022-01-01",
+                  end = "2022-12-31",
+                  min = as.Date(data_inicial),
+                  max = as.Date(atualizacao),
+                  separator = " - ",
+                  format = "dd-mm-yyyy",
+                  language = 'pt'
+                )
+              )
+            )
+          )
+        ),
+        fluidRow(
+          bs4Card(
+            title = "Sexo",
+            width = 6,
+            echarts4r::echarts4rOutput(
+              outputId ="graf_casos_sexo"
+            )
+          ),
+          bs4Card(
+            title = "Lotação",
+            width = 6,
+            echarts4r::echarts4rOutput(
+              outputId ="graf_casos_lot"
+            )
+          )
+        ),
+        fluidRow(
+          bs4Card(
+            title = "Situação Funcional",
+            width = 12,
+            echarts4r::echarts4rOutput(
+              outputId ="graf_casos_sitf"
+            )
+          )
         )
-      )
-    ),
-
-    fluidRow(
-      column(2,
-             offset = 10,
-             glue::glue("Dados atualizados até {format(as.Date(atualizacao), '%d-%m-%Y')}")
       )
     )
   )
@@ -209,23 +275,53 @@ ui <- bs4DashPage(
 
 
 
-
-
 server <- function(input, output, session) {
 
+  dados_casos_filtrados <- reactive({
+    dados |>
+      filter(cid_grupo %in% input$cid_cat,
+             data_inicio_licenca>=input$casos_data[1],
+             data_inicio_licenca<=input$casos_data[2]
+      )
+  })
 
-  updateSelectizeInput(session, 'cid_cat', choices = cid_cat$cat, server = TRUE)
+  output$graf_casos_sexo <- echarts4r::renderEcharts4r({
 
-  # output$cid_cat_choosed<- renderTable({
-  #   cid_cat |>
-  #     filter(cat %in% input$cid_cat) |>
-  #     rename(
-  #       "Categoria" = cat,
-  #            "Descrição" = descricao
-  #       )
-  # },
-  # align = "cl"
-  # )
+    dados_casos_filtrados() |>
+      summarise(n = n(), .by = sexo) |>
+      echarts4r::e_chart(
+        x = sexo
+      ) |>
+      echarts4r::e_pie(
+        serie = n) |>
+      echarts4r::e_tooltip() |>
+      echarts4r::e_color(
+        c("pink", "royalblue")
+      )
+  })
+
+  output$graf_casos_lot <- echarts4r::renderEcharts4r({
+
+    dados_casos_filtrados() |>
+      summarise(n = n(), .by = lotacao) |>
+      echarts4r::e_chart(
+        x = lotacao
+      ) |>
+      echarts4r::e_pie(
+        serie = n) |>
+      echarts4r::e_tooltip()
+  })
+
+  output$graf_casos_sitf <- echarts4r::renderEcharts4r({
+    dados_casos_filtrados() |>
+      summarise(n = n(), .by = situacao_funcional) |>
+      echarts4r::e_chart(
+        x = situacao_funcional
+      ) |>
+      echarts4r::e_bar(
+        serie = n) |>
+      echarts4r::e_tooltip()
+  })
 
   output$vg_serv_total <- renderbs4ValueBox({
 
@@ -372,6 +468,7 @@ server <- function(input, output, session) {
 
     plotly::ggplotly(p)
   })
+
 
 }
 
