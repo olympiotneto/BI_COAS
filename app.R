@@ -193,7 +193,7 @@ ui <- bs4DashPage(
                 dateRangeInput(
                   inputId = "casos_data",
                   label ="Selecione as datas",
-                  start = "2022*01-01",
+                  start = "2022-01-01",
                   end = "2022-12-31",
                   min = as.Date(data_inicial),
                   max = as.Date(data_final),
