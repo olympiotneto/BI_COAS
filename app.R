@@ -39,6 +39,7 @@ ui <- bs4DashPage(
         tabName = "casos",
         icon = icon("briefcase-medical")
 
+<<<<<<< HEAD
       ),
       bs4SidebarMenuItem(
         text = "Prevalência",
@@ -199,6 +200,157 @@ ui <- bs4DashPage(
     )
   )
 )
+=======
+       ),
+       bs4SidebarMenuItem(
+         text = "Prevalência",
+         tabName = "prevalencia",
+         icon = icon("chart-line")
+       )
+     )
+   ),
+   # BODY --------------------------------------------------------------------
+   body = bs4DashBody(
+     tags$head(
+       tags$link(
+         rel = "stylesheet",
+         href = "custom.css"
+       )
+     ),
+     # fluidRow(
+     #   #Pesquisa geral por data
+     #   column(
+     #     width = 6,
+     #     dateRangeInput(
+     #       inputId = "data_pesquisa",
+     #       label = "Selecione uma data inicial e final",
+     #       min =min(dados$data_inicio_licenca) ,
+     #       max = max(dados$data_inicio_licenca) ,
+     #       start = min(dados$data_inicio_licenca),
+     #       end = max(dados$data_inicio_licenca) ,
+     #       format = "dd/mm/yyyy",
+     #       separator = "a",
+     #       language = "pt-BR"
+     #     )
+     #   ),
+     #   column(
+     #     width = 6,
+     #     #Escolhi o selectsizeinput porque são muitos elementos
+     #     selectizeInput(
+     #       inputId = "cid_cat",
+     #       label = "Escolha uma ou mais categoria(s) de CID",
+     #       choices =  NULL,
+     #       multiple = TRUE,
+     #       #selectize = TRUE,
+     #       options = list(maxOptions = 5)
+     #     )
+     #   )
+     # ),
+     # fluidRow(
+     #   column(
+     #     width = 6,
+     #     offset = 6,
+     #     tableOutput("cid_cat_choosed")
+     #   ),
+     bs4TabItems(
+       #  bs4TabItem(
+       #   tabName = "visao_geral"
+       # ),
+       # UI VISAO GERAL SERVIDORES -----------------------------------------------
+       ###Caixinhas de infos gerais no submenu servidores
+       #Total de servidores
+       #Sexo
+       #Lotação
+       #Situação funcional
+       #Gráfico no final com a evolução mensal
+       bs4TabItem(
+         tabName = "vg_servidores",
+         titlePanel("Visão Geral - Servidores"),
+       #glue::glue(" -  Atualizado até {format(as.Date(atualizacao), '%d-%m-%Y')}"
+         hr(),
+         fluidRow(
+           bs4ValueBoxOutput(
+             "vg_serv_total",
+             width = 4
+           ),
+           bs4ValueBoxOutput(
+             "vg_serv_sexo",
+             width = 4
+           ),
+           bs4ValueBoxOutput(
+             "vg_serv_lot",
+             width = 4
+           ),
+           # bs4ValueBoxOutput(
+           #   "vg_serv_sit",
+           #   width = 3
+           # )
+         ),
+         bs4Card(
+           width = 12,
+           title = "Servidores com licenças concedidas por ano",
+           collapsible = FALSE,
+           plotly::plotlyOutput("vg_serie_nr_serv")
+         )
+       ),
+       # UI VISAO GERAL LICENÇAS -----------------------------------------------
+       ###Caixinhas de infos gerais no submenu licenças
+       #Total de licenças
+       #Sexo
+       #Lotação
+       #Situação funcional
+       #Gráfico no final com a evolução mensal
+       bs4TabItem(
+         tabName = "vg_licencas",
+         titlePanel("Visão Geral - Licenças"),
+         hr(),
+         fluidRow(
+           bs4ValueBoxOutput(
+             "vg_lic_total",
+             width = 4
+           ),
+           bs4ValueBoxOutput(
+             "vg_lic_sexo",
+             width = 4
+           ),
+           bs4ValueBoxOutput(
+             "vg_lic_lot",
+             width = 4
+           ),
+           # bs4ValueBoxOutput(
+           #   "vg_slic_sit",
+           #   width = 3
+           # )
+         ),
+         bs4Card(
+           width = 12,
+           title = "Número de licenças concedidas por ano",
+           collapsible = FALSE,
+           plotly::plotlyOutput("vg_serie_nr_lic")
+         )
+       )
+     ),
+     fluidRow(
+       column(2,
+              offset = 10,
+              glue::glue("Dados atualizados até {format(as.Date(atualizacao), '%d-%m-%Y')}")
+       )
+     )
+   )
+)
+
+       # UI Casos -----------------------------------------------
+       #Fazer selects com:
+       #Grupo de CIDs
+       #Periodo
+       #Sexo: masculino/Feminino/Todos
+       #Lotação: Sercretaria/Cartório/Todos
+
+       # bs4TabItem(
+       #
+       # )
+
+>>>>>>> c9517d4f17b4c4bdaf04d32eb46f948ef40c1eb8
 
 
 
@@ -220,7 +372,16 @@ server <- function(input, output, session) {
   # align = "cl"
   # )
 
+<<<<<<< HEAD
   output$vg_serv_total <- renderbs4ValueBox({
+=======
+     bs4ValueBox(
+       value = valor ,
+       subtitle = "Total de servidores na base de dados" ,
+       icon = icon("users"),
+       color = "lightblue"
+     )
+>>>>>>> c9517d4f17b4c4bdaf04d32eb46f948ef40c1eb8
 
     valor <- dados|>
       summarise(
@@ -249,12 +410,21 @@ server <- function(input, output, session) {
     valor <- glue::glue(valor[1], " homens ", "<br> ", valor[2], " mulheres")
 
 
+<<<<<<< HEAD
     bs4ValueBox(
       value = HTML(valor) ,
       subtitle = "Total servidores por sexo" ,
       icon = icon("venus-mars"),
       color = "lightblue"
     )
+=======
+     bs4ValueBox(
+       value = HTML(valor) ,
+       subtitle = "Total servidores por sexo" ,
+       icon = icon("venus-mars"),
+       color = "lightblue"
+     )
+>>>>>>> c9517d4f17b4c4bdaf04d32eb46f948ef40c1eb8
 
   })
 
@@ -270,12 +440,21 @@ server <- function(input, output, session) {
     valor <- glue::glue(valor[1], " em cartório ", "<br> ", valor[2], " na secretaria")
 
 
+<<<<<<< HEAD
     bs4ValueBox(
       value = HTML(valor) ,
       subtitle = "Total servidores por lotação" ,
       icon = icon("building"),
       color = "lightblue"
     )
+=======
+     bs4ValueBox(
+       value = HTML(valor) ,
+       subtitle = "Total servidores por lotação" ,
+       icon = icon("building"),
+       color = "lightblue"
+     )
+>>>>>>> c9517d4f17b4c4bdaf04d32eb46f948ef40c1eb8
 
   })
 
@@ -285,12 +464,21 @@ server <- function(input, output, session) {
       contar_linhas() |>
       formatar_numero()
 
+<<<<<<< HEAD
     bs4ValueBox(
       value = valor ,
       subtitle = "Total de licenças na base de dados" ,
       icon = icon("users"),
       color = "lightblue"
     )
+=======
+     bs4ValueBox(
+       value = valor ,
+       subtitle = "Total de licenças na base de dados" ,
+       icon = icon("users"),
+       color = "lightblue"
+     )
+>>>>>>> c9517d4f17b4c4bdaf04d32eb46f948ef40c1eb8
 
   })
 
@@ -305,12 +493,21 @@ server <- function(input, output, session) {
     valor <- glue::glue(valor[1], " homens ", "<br> ", valor[2], " mulheres")
 
 
+<<<<<<< HEAD
     bs4ValueBox(
       value = HTML(valor) ,
       subtitle = "Total de licenças por sexo" ,
       icon = icon("venus-mars"),
       color = "lightblue"
     )
+=======
+     bs4ValueBox(
+       value = HTML(valor) ,
+       subtitle = "Total de licenças por sexo" ,
+       icon = icon("venus-mars"),
+       color = "lightblue"
+     )
+>>>>>>> c9517d4f17b4c4bdaf04d32eb46f948ef40c1eb8
 
   })
 
@@ -325,17 +522,27 @@ server <- function(input, output, session) {
     valor <- glue::glue(valor[1], " em cartório ", "<br> ", valor[2], " na secretaria")
 
 
+<<<<<<< HEAD
     bs4ValueBox(
       value = HTML(valor) ,
       subtitle = "Total de licenças por lotação" ,
       icon = icon("building") ,
       color = "lightblue"
     )
+=======
+     bs4ValueBox(
+       value = HTML(valor) ,
+       subtitle = "Total de licenças por lotação" ,
+       icon = icon("building") ,
+       color = "lightblue"
+     )
+>>>>>>> c9517d4f17b4c4bdaf04d32eb46f948ef40c1eb8
 
   })
 
   #Gráfico servidores/ano
 
+<<<<<<< HEAD
   output$vg_serie_nr_serv <- plotly::renderPlotly({
     p <-  dados |>
       mutate(ano = lubridate::year(data_inicio_licenca)) |>
@@ -350,6 +557,37 @@ server <- function(input, output, session) {
 
     plotly::ggplotly(p)
   })
+=======
+   output$vg_serie_nr_serv <- plotly::renderPlotly({
+    p <-  dados |>
+       mutate(ano = lubridate::year(data_inicio_licenca)) |>
+       summarise(Freq = n_distinct(codigo),.by = ano) |>
+       filter(!is.na(ano)) |>
+       ggplot(aes(x = ano, y = Freq)) +
+       geom_bar(stat = "identity", fill = cores_Assec[2], position = "dodge")+
+       ylab("Nº servidores") +
+       scale_x_continuous(name="Ano",breaks = seq(2004,2023,1))+
+       theme_classic() +
+       theme(axis.text.x = element_text(angle = 60, vjust = .5))
+
+    plotly::ggplotly(p)
+   })
+
+   output$vg_serie_nr_lic <- plotly::renderPlotly({
+     p <- dados |>
+       mutate(ano = lubridate::year(data_inicio_licenca)) |>
+       summarise(Freq = n(),.by = ano) |>
+       filter(!is.na(ano)) |>
+      ggplot(aes(x = ano, y = Freq)) +
+       geom_bar(stat = "identity", fill = cores_Assec[2], position = "dodge")+
+       ylab("Nº servidores") +
+       scale_x_continuous(name="Ano",breaks = seq(2004,2023,1))+
+       theme_classic() +
+       theme(axis.text.x = element_text(angle = 60, vjust = .5))
+
+     plotly::ggplotly(p)
+   })
+>>>>>>> c9517d4f17b4c4bdaf04d32eb46f948ef40c1eb8
 
   output$vg_serie_nr_lic <- plotly::renderPlotly({
     p <- dados |>
