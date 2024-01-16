@@ -292,7 +292,6 @@ server <- function(input, output, session) {
   })
 
   output$vg_serv_total <- renderbs4ValueBox({
-
     valor <- dados|>
       summarise(
         n_distinct(codigo)
@@ -306,11 +305,9 @@ server <- function(input, output, session) {
       icon = icon("users"),
       color = "lightblue"
     )
-
   })
 
   output$vg_serv_sexo <- renderbs4ValueBox({
-
     valor <- dados|>
       summarise(
         n_distinct(codigo),
@@ -326,11 +323,9 @@ server <- function(input, output, session) {
       icon = icon("venus-mars"),
       color = "lightblue"
     )
-
   })
 
   output$vg_serv_lot <- renderbs4ValueBox({
-
     valor <- dados|>
       summarise(
         n_distinct(codigo),
@@ -347,11 +342,9 @@ server <- function(input, output, session) {
       icon = icon("building"),
       color = "lightblue"
     )
-
   })
 
   output$vg_lic_total <- renderbs4ValueBox({
-
     valor <- dados|>
       contar_linhas() |>
       formatar_numero()
@@ -362,11 +355,9 @@ server <- function(input, output, session) {
       icon = icon("users"),
       color = "lightblue"
     )
-
   })
 
   output$vg_lic_sexo <- renderbs4ValueBox({
-
     valor <- dados|>
       summarise(
         n = n(),
@@ -382,11 +373,9 @@ server <- function(input, output, session) {
       icon = icon("venus-mars"),
       color = "lightblue"
     )
-
   })
 
   output$vg_lic_lot <- renderbs4ValueBox({
-
     valor <- dados|>
       summarise(
         n = n(),
@@ -395,14 +384,12 @@ server <- function(input, output, session) {
       pull() |> formatar_numero()
     valor <- glue::glue(valor[1], " em cartório ", "<br> ", valor[2], " na secretaria")
 
-
     bs4ValueBox(
       value = HTML(valor) ,
       subtitle = "Total de licenças por lotação" ,
       icon = icon("building") ,
       color = "lightblue"
     )
-
   })
 
   #Gráfico servidores/ano
@@ -433,11 +420,8 @@ server <- function(input, output, session) {
       scale_x_continuous(name="Ano",breaks = seq(2004,2023,1))+
       theme_classic() +
       theme(axis.text.x = element_text(angle = 60, vjust = .5))
-
     plotly::ggplotly(p)
   })
-
-
 }
 
 
