@@ -8,7 +8,7 @@ cid_sub <- readRDS("data/Cid_sub.RDS")
 opcoes_cat <- setNames(cid_cat$cat,paste(cid_cat$cat,cid_cat$descricao, sep="-"))
 
 #data atualização dos dados  ( ultima data dos dados)
-atualizacao <-
+data_final <-
   dados |>
   slice_max(data_inicio_licenca) |>
   pull(data_inicio_licenca) |>
@@ -66,8 +66,8 @@ ui <- bs4DashPage(
 
   # Rodapé ------------------------------------------------------------------
 
-  footer = bs4DashFooter(left = NULL,
-                         right =  glue::glue("Dados atualizados até {format(as.Date(atualizacao), '%d-%m-%Y')}"),
+  footer = bs4DashFooter(left = glue::glue("Data inicial com registro {format(as.Date(data_inicial), '%d-%m-%Y')}"),
+                         right =  glue::glue("Dados atualizados até {format(as.Date(data_final), '%d-%m-%Y')}"),
                          fixed = TRUE),
   # BODY --------------------------------------------------------------------
   body = bs4DashBody(
@@ -77,45 +77,8 @@ ui <- bs4DashPage(
         href = "custom.css"
       )
     ),
-    # fluidRow(
-    #   #Pesquisa geral por data
-    #   column(
-    #     width = 6,
-    #     dateRangeInput(
-    #       inputId = "data_pesquisa",
-    #       label = "Selecione uma data inicial e final",
-    #       min =min(dados$data_inicio_licenca) ,
-    #       max = max(dados$data_inicio_licenca) ,
-    #       start = min(dados$data_inicio_licenca),
-    #       end = max(dados$data_inicio_licenca) ,
-    #       format = "dd/mm/yyyy",
-    #       separator = "a",
-    #       language = "pt-BR"
-    #     )
-    #   ),
-    #   column(
-    #     width = 6,
-    #     #Escolhi o selectsizeinput porque são muitos elementos
-    #     selectizeInput(
-    #       inputId = "cid_cat",
-    #       label = "Escolha uma ou mais categoria(s) de CID",
-    #       choices =  NULL,
-    #       multiple = TRUE,
-    #       #selectize = TRUE,
-    #       options = list(maxOptions = 5)
-    #     )
-    #   )
-    # ),
-    # fluidRow(
-    #   column(
-    #     width = 6,
-    #     offset = 6,
-    #     tableOutput("cid_cat_choosed")
-    #   ),
+
     bs4TabItems(
-      #  bs4TabItem(
-      #   tabName = "visao_geral"
-      # ),
       # UI VISAO GERAL SERVIDORES -----------------------------------------------
       ###Caixinhas de infos gerais no submenu servidores
       #Total de servidores
@@ -230,12 +193,12 @@ ui <- bs4DashPage(
                 dateRangeInput(
                   inputId = "casos_data",
                   label ="Selecione as datas",
-                  start = "2022-01-01",
+                  start = "2022*01-01",
                   end = "2022-12-31",
                   min = as.Date(data_inicial),
-                  max = as.Date(atualizacao),
+                  max = as.Date(data_final),
                   separator = " - ",
-                  format = "dd-mm-yyyy",
+                  format = "dd/mm/yyyy",
                   language = 'pt'
                 )
               )
@@ -289,6 +252,7 @@ server <- function(input, output, session) {
 
     dados_casos_filtrados() |>
       summarise(n = n(), .by = sexo) |>
+      mutate(prop = n/sum(n)) |>
       echarts4r::e_chart(
         x = sexo
       ) |>
@@ -304,22 +268,26 @@ server <- function(input, output, session) {
 
     dados_casos_filtrados() |>
       summarise(n = n(), .by = lotacao) |>
+      mutate(prop = n/sum(n)) |>
       echarts4r::e_chart(
         x = lotacao
       ) |>
-      echarts4r::e_pie(
-        serie = n) |>
+      echarts4r::e_pie(serie = n,
+                       legend = TRUE,
+                       label = list(show=FALSE)) |>
       echarts4r::e_tooltip()
   })
 
   output$graf_casos_sitf <- echarts4r::renderEcharts4r({
     dados_casos_filtrados() |>
-      summarise(n = n(), .by = situacao_funcional) |>
+      summarise(n = n(), .by = situacao) |>
+      mutate(prop = n/sum(n)) |>
       echarts4r::e_chart(
-        x = situacao_funcional
+        x = situacao
       ) |>
       echarts4r::e_bar(
-        serie = n) |>
+        serie = n,
+        legend = FALSE) |>
       echarts4r::e_tooltip()
   })
 

@@ -44,7 +44,8 @@ dados <- dados |>
       INATIVO = c("INATIVO"),
       other_level = "OUTROS"
 
-    ))
+    )) |>
+  janitor::clean_names()
 
 saveRDS(
   dados,
