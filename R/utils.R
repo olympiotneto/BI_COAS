@@ -1,3 +1,5 @@
+require(tidyverse)
+
 #Cores Assec
 cores_Assec <- c("#2D4B73","#253C59","#99B4BF","#D9B70D","#BF8D30")
 
@@ -20,8 +22,4 @@ contar_linhas <- function(tab){
     pull(n)
 }
 
-#data atualização dos dados
-atualizacao <-
-  dados |>
-  slice_max(data_inicio_licenca) |>
-  pull(data_inicio_licenca)
+
