@@ -229,6 +229,10 @@ ui <- bs4DashPage(
               outputId ="graf_casos_sitf"
             )
           )
+        ),
+        downloadButton(
+          outputId = "down_casos",
+          label = "Download dados filtrados"
         )
       )
     )
@@ -248,6 +252,21 @@ server <- function(input, output, session) {
       )
   })
 
+
+
+  output$down_casos <- downloadHandler(
+    filename = function() {
+      paste0("dados_filtrados", ".csv")
+    },
+    content = function(file) {
+      dados_down_filt <- dados_casos_filtrados() |>
+        group_by(cid_grupo,sexo,lotacao,situacao) |>
+        summarise(freq = n()) |>
+        rename()
+      readr::write_excel_csv2(dados_down_filt, file)
+    }
+  )
+
   output$graf_casos_sexo <- echarts4r::renderEcharts4r({
 
     dados_casos_filtrados() |>
@@ -257,7 +276,9 @@ server <- function(input, output, session) {
         x = sexo
       ) |>
       echarts4r::e_pie(
-        serie = n) |>
+        serie = n,
+        radius = c("50%", "70%"),
+        label = list(show=FALSE)) |>
       echarts4r::e_tooltip() |>
       echarts4r::e_color(
         c("pink", "royalblue")
@@ -273,6 +294,7 @@ server <- function(input, output, session) {
         x = lotacao
       ) |>
       echarts4r::e_pie(serie = n,
+                       radius = c("50%", "70%"),
                        legend = TRUE,
                        label = list(show=FALSE)) |>
       echarts4r::e_tooltip()
@@ -282,6 +304,7 @@ server <- function(input, output, session) {
     dados_casos_filtrados() |>
       summarise(n = n(), .by = situacao) |>
       mutate(prop = n/sum(n)) |>
+      arrange(desc(n)) |>
       echarts4r::e_chart(
         x = situacao
       ) |>
