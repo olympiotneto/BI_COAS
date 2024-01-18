@@ -241,8 +241,15 @@ ui <- bs4DashPage(
 
 
 
+# Servidor ----------------------------------------------------------------
+
+
 
 server <- function(input, output, session) {
+
+
+# Dados filtrados aba casos ------------------------------------------------
+
 
   dados_casos_filtrados <- reactive({
     dados |>
@@ -253,6 +260,9 @@ server <- function(input, output, session) {
   })
 
 
+# Aba Casos - Servidor ----------------------------------------------------
+
+
 
   output$down_casos <- downloadHandler(
     filename = function() {
@@ -260,44 +270,76 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       dados_down_filt <- dados_casos_filtrados() |>
-        group_by(cid_grupo,sexo,lotacao,situacao) |>
+        left_join(cid_cat, by = c("cid_grupo"="cat")) |>
+        group_by(cid_grupo,descricao,sexo,lotacao,situacao) |>
         summarise(freq = n()) |>
-        rename()
+        rename("categoria_Cid" = cid_grupo)
       readr::write_excel_csv2(dados_down_filt, file)
     }
   )
+
 
   output$graf_casos_sexo <- echarts4r::renderEcharts4r({
 
     dados_casos_filtrados() |>
       summarise(n = n(), .by = sexo) |>
-      mutate(prop = n/sum(n)) |>
+      mutate(prop = round(n/sum(n),2),
+             nome = paste(sexo,prop,sep=";")) |>
       echarts4r::e_chart(
-        x = sexo
+        x = nome
       ) |>
       echarts4r::e_pie(
         serie = n,
         radius = c("50%", "70%"),
-        label = list(show=FALSE)) |>
-      echarts4r::e_tooltip() |>
+        label = list(
+          show=FALSE
+        )
+      ) |>
+      echarts4r::e_legend(
+        formatter = htmlwidgets::JS(
+          "function(nome){
+          var vals = nome.split(';')
+          return(vals[0])}"
+        )
+      ) |>
+      echarts4r::e_tooltip(
+        formatter = htmlwidgets::JS("function(params){
+                                    var vals = params.name.split(';')
+                                    return('<strong>' + vals[0] +
+                                    '</strong><br />n: ' + params.value +
+                                    '<br />porcentagem: ' +  vals[1])}")
+      ) |>
       echarts4r::e_color(
         c("pink", "royalblue")
       )
   })
 
   output$graf_casos_lot <- echarts4r::renderEcharts4r({
-
     dados_casos_filtrados() |>
       summarise(n = n(), .by = lotacao) |>
-      mutate(prop = n/sum(n)) |>
+      mutate(prop = round(n/sum(n),2),
+             nome = paste(lotacao,prop,sep=";")) |>
       echarts4r::e_chart(
-        x = lotacao
+        x = nome
       ) |>
       echarts4r::e_pie(serie = n,
                        radius = c("50%", "70%"),
                        legend = TRUE,
                        label = list(show=FALSE)) |>
-      echarts4r::e_tooltip()
+      echarts4r::e_legend(
+        formatter = htmlwidgets::JS(
+          "function(nome){
+          var vals = nome.split(';')
+          return(vals[0])}"
+        )
+      ) |>
+      echarts4r::e_tooltip(
+        formatter = htmlwidgets::JS("function(params){
+                                    var vals = params.name.split(';')
+                                    return('<strong>' + vals[0] +
+                                    '</strong><br />n: ' + params.value +
+                                    '<br />porcentagem: ' +  vals[1])}")
+      )
   })
 
   output$graf_casos_sitf <- echarts4r::renderEcharts4r({
@@ -313,6 +355,9 @@ server <- function(input, output, session) {
         legend = FALSE) |>
       echarts4r::e_tooltip()
   })
+
+
+  # Aba Visão Geral - Servidor ----------------------------------------------------
 
   output$vg_serv_total <- renderbs4ValueBox({
     valor <- dados|>
