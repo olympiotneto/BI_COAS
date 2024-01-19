@@ -6,6 +6,15 @@ dados <- readRDS("data/dados.RDS")
 cid_cat <- readRDS("data/Cid_cat.RDS")
 cid_sub <- readRDS("data/Cid_sub.RDS")
 opcoes_cat <- setNames(cid_cat$cat,paste(cid_cat$cat,cid_cat$descricao, sep="-"))
+# opcoes_subcat <- setNames(cid_sub$subcat,
+#                           stringr::str_replace_all(
+#                             stringr::str_wrap(
+#                               paste(cid_sub$subcat,
+#                                     cid_sub$descricao,
+#                                     sep="-"),
+#                               width=80), "\\n", "<br>"
+#                           )
+# )
 
 #data atualização dos dados  ( ultima data dos dados)
 data_final <-
@@ -183,7 +192,8 @@ ui <- bs4DashPage(
                     width = 600,
                     size = 5,
                     header = "Escolha um CID",
-                    hideDisabled = FALSE
+                    hideDisabled = FALSE,
+                    multipleSeparator = "|"
                   ),
                   multiple = TRUE
                 )
@@ -230,9 +240,79 @@ ui <- bs4DashPage(
             )
           )
         ),
+        fluidRow(
+          bs4Card(
+            title = "Distribuição por categoria de CID",
+            width = 12,
+            echarts4r::echarts4rOutput(
+              outputId ="graf_casos_cid"
+            )
+          )
+        ),
         downloadButton(
           outputId = "down_casos",
           label = "Download dados filtrados"
+        )
+      ),
+      # UI Prevalência -----------------------------------------------
+      #Fazer selects com:
+      #Grupo de CIDs e depois selecionar os cids disponíveis
+      #Evolução total
+      #Evolução por Sexo
+      bs4TabItem(
+        tabName = "prevalencia",
+        fluidRow(
+          bs4Card(
+            title = "Filtros",
+            width = 12,
+            fluidRow(
+              column(
+                6,
+                shinyWidgets::pickerInput(
+                  inputId = "cid_cat_prev",
+                  label = "Selecione as categorias de CID",
+                  choices = c("Carregando..." = ""),
+                  multiple = TRUE,
+                  options = shinyWidgets::pickerOptions(
+                    actionsBox = TRUE,
+                    liveSearch = TRUE,
+                    width = 600,
+                    size = 5,
+                    deselectAllText = "desmarcar tudo",
+                    selectAllText = "marcar tudo",
+                    noneSelectedText = "Nenhum CID selecionado",
+                    hideDisabled = FALSE
+                  )
+                ),
+                shinyWidgets::pickerInput(
+                  inputId = "cid_subcat_prev",
+                  label = "Selecione um ou mais CIDs disponíveis",
+                  multiple = TRUE,
+                  choices = c("Carregando..." = ""),
+                  selected = c(""),
+                  inline = TRUE,
+                  options = shinyWidgets::pickerOptions(
+                    actionsBox = TRUE,
+                    liveSearch = TRUE,
+                    width = "600",
+                    size = 5,
+                    deselectAllText = "desmarcar tudo",
+                    selectAllText = "marcar tudo",
+                    multipleSeparator = "|",
+                    noneSelectedText = "Nenhum CID selecionado",
+                    choicesOpt = list(
+                      content = stringr::str_wrap(opcoes_subcat, width = 80)
+                    ),
+                    hideDisabled = FALSE
+                  )
+                )
+              ),
+              column(
+                6,
+                "Incluir a barra de tempo"
+              )
+            )
+          )
         )
       )
     )
@@ -247,8 +327,9 @@ ui <- bs4DashPage(
 
 server <- function(input, output, session) {
 
+  # Aba Casos - Servidor ----------------------------------------------------
 
-# Dados filtrados aba casos ------------------------------------------------
+  # Dados filtrados aba casos ------------------------------------------------
 
 
   dados_casos_filtrados <- reactive({
@@ -260,10 +341,10 @@ server <- function(input, output, session) {
   })
 
 
-# Aba Casos - Servidor ----------------------------------------------------
 
 
 
+  #### Donwload dos dados
   output$down_casos <- downloadHandler(
     filename = function() {
       paste0("dados_filtrados", ".csv")
@@ -307,7 +388,7 @@ server <- function(input, output, session) {
                                     var vals = params.name.split(';')
                                     return('<strong>' + vals[0] +
                                     '</strong><br />n: ' + params.value +
-                                    '<br />porcentagem: ' +  vals[1])}")
+                                    '<br />porcentagem: ' +  (vals[1]*100).toFixed(2) + '%')}")
       ) |>
       echarts4r::e_color(
         c("pink", "royalblue")
@@ -338,7 +419,7 @@ server <- function(input, output, session) {
                                     var vals = params.name.split(';')
                                     return('<strong>' + vals[0] +
                                     '</strong><br />n: ' + params.value +
-                                    '<br />porcentagem: ' +  vals[1])}")
+                                    '<br />porcentagem: ' +  (vals[1]*100).toFixed(2) + '%')}")
       )
   })
 
@@ -356,6 +437,20 @@ server <- function(input, output, session) {
       echarts4r::e_tooltip()
   })
 
+  output$graf_casos_cid <- echarts4r::renderEcharts4r({
+    dados_casos_filtrados() |>
+      summarise(n = n(), .by = cid_grupo) |>
+      mutate(prop = n/sum(n)) |>
+      arrange(desc(n)) |>
+      echarts4r::e_chart(
+        x = cid_grupo
+      ) |>
+      echarts4r::e_bar(
+        serie = n,
+        legend = FALSE) |>
+      echarts4r::e_tooltip()
+
+  })
 
   # Aba Visão Geral - Servidor ----------------------------------------------------
 
@@ -490,7 +585,59 @@ server <- function(input, output, session) {
       theme(axis.text.x = element_text(angle = 60, vjust = .5))
     plotly::ggplotly(p)
   })
-}
 
+
+  # Aba Prevalência ---------------------------------------------------------
+  #Faz o update dos inputbox aninhados
+
+  shinyWidgets::updatePickerInput(
+    session =  session,
+    inputId = "cid_cat_prev",
+    choices = opcoes_cat
+  )
+
+
+  opcoes_subcat <- setNames(cid_sub$subcat,
+                            stringr::str_replace_all(
+                              stringr::str_wrap(
+                                paste(cid_sub$subcat,
+                                      cid_sub$descricao,
+                                      sep="-"),
+                                width=80), "\\n", "<br>"
+                            )
+  )
+
+  observe({
+    sub_cat_prev <- cid_sub |>
+      filter(cat %in% input$cid_cat_prev)
+
+      choices_subcat<- set_names(sub_cat_prev$subcat,
+                                   stringr::str_wrap(
+                                     paste(sub_cat_prev$subcat,
+                                           sub_cat_prev$descricao,
+                                           sep="-"),
+                                     width=80)
+                                 )
+      choices_subcat <- stringr::str_replace_all(choices_subcat, "\\n", "<br>")
+
+      sub_cat_prev <- sub_cat_prev|>
+        pull(subcat) |>
+        unique()
+
+##rever
+
+      shinyWidgets::updatePickerInput(
+        session =  session,
+        inputId = "cid_subcat_prev",
+        choices = sub_cat_prev,
+        selected =
+        options = list(
+          choicesOpt = list(
+          content = choices_subcat
+        )
+        )
+      )
+  })
+}
 
 shinyApp(ui, server)

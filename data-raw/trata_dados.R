@@ -53,3 +53,15 @@ saveRDS(
 )
 
 
+#Tratamento dos dados do cat_sub (problema do ponto para formar a categoria CID)
+
+cid_sub <- cid_sub |> mutate(cat = substr(gsub("\\.", "", subcat), 1, 3)) |>
+
+janitor::clean_names()
+
+saveRDS(
+  cid_sub,
+  "data/Cid_sub.RDS"
+)
+
+
