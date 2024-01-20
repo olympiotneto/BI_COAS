@@ -6,15 +6,6 @@ dados <- readRDS("data/dados.RDS")
 cid_cat <- readRDS("data/Cid_cat.RDS")
 cid_sub <- readRDS("data/Cid_sub.RDS")
 opcoes_cat <- setNames(cid_cat$cat,paste(cid_cat$cat,cid_cat$descricao, sep="-"))
-# opcoes_subcat <- setNames(cid_sub$subcat,
-#                           stringr::str_replace_all(
-#                             stringr::str_wrap(
-#                               paste(cid_sub$subcat,
-#                                     cid_sub$descricao,
-#                                     sep="-"),
-#                               width=80), "\\n", "<br>"
-#                           )
-# )
 
 #data atualização dos dados  ( ultima data dos dados)
 data_final <-
@@ -300,24 +291,46 @@ ui <- bs4DashPage(
                     selectAllText = "marcar tudo",
                     multipleSeparator = "|",
                     noneSelectedText = "Nenhum CID selecionado",
-                    choicesOpt = list(
-                      content = stringr::str_wrap(opcoes_subcat, width = 80)
-                    ),
                     hideDisabled = FALSE
                   )
                 )
               ),
               column(
                 6,
-                "Incluir a barra de tempo"
+                shinyWidgets::sliderTextInput(
+                  inputId = "prev_anos",
+                  label = "Selecione um intervalo de anos:",
+                  choices = dados |>
+                    pull(data_inicio_licenca) |>
+                    as.Date() |>
+                    year() |>
+                    unique() |>
+                    sort(),
+                  selected = c(
+                    year(as.Date(data_inicial)),
+                    year(as.Date(data_final)
+                         )
+                    ),
+                  grid = TRUE
+                )
               )
+            )
+          )
+        ),
+        fluidRow(
+          bs4Card(
+            title = "Evolução de licenças",
+            width = 12,
+            plotOutput(
+              outputId = "graf_prev_evol"
+            )
             )
           )
         )
       )
     )
   )
-)
+
 
 
 
@@ -589,55 +602,64 @@ server <- function(input, output, session) {
 
   # Aba Prevalência ---------------------------------------------------------
   #Faz o update dos inputbox aninhados
-
   shinyWidgets::updatePickerInput(
     session =  session,
     inputId = "cid_cat_prev",
     choices = opcoes_cat
   )
 
-
-  opcoes_subcat <- setNames(cid_sub$subcat,
-                            stringr::str_replace_all(
-                              stringr::str_wrap(
-                                paste(cid_sub$subcat,
-                                      cid_sub$descricao,
-                                      sep="-"),
-                                width=80), "\\n", "<br>"
-                            )
-  )
-
   observe({
     sub_cat_prev <- cid_sub |>
       filter(cat %in% input$cid_cat_prev)
 
-      choices_subcat<- set_names(sub_cat_prev$subcat,
-                                   stringr::str_wrap(
-                                     paste(sub_cat_prev$subcat,
-                                           sub_cat_prev$descricao,
-                                           sep="-"),
-                                     width=80)
-                                 )
-      choices_subcat <- stringr::str_replace_all(choices_subcat, "\\n", "<br>")
+    choices_subcat <- set_names(sub_cat_prev$subcat,
+                                  paste(sub_cat_prev$subcat,
+                                        sub_cat_prev$descricao,
+                                        sep = "-")
+                                )
+#
+#     sub_cat_prev <- sub_cat_prev |>
+#       pull(subcat) |>
+#       unique()
 
-      sub_cat_prev <- sub_cat_prev|>
-        pull(subcat) |>
-        unique()
 
-##rever
+    shinyWidgets::updatePickerInput(
+      session =  session,
+      inputId = "cid_subcat_prev",
+      choices = choices_subcat,
+      selected =choices_subcat
+    )
 
-      shinyWidgets::updatePickerInput(
-        session =  session,
-        inputId = "cid_subcat_prev",
-        choices = sub_cat_prev,
-        selected =
-        options = list(
-          choicesOpt = list(
-          content = choices_subcat
-        )
-        )
+  })
+
+  dados_prev_filtrados <- reactive({
+    dados |>
+      filter(cid %in% input$cid_subcat_prev,
+             year(as.Date(data_inicio_licenca))>=input$prev_anos[1],
+             year(as.Date(data_inicio_licenca))<=input$prev_anos[2]
       )
   })
-}
+
+  output$graf_prev_evol<- renderPlot({
+    dados_prev_filtrados() |>
+      group_by(mes = floor_date(data_inicio_licenca, "month")) |>
+      #group_by(mes = floor_date(`Data início licença`, "month")) |>
+      summarise(Freq = n(), .groups = "drop" )|>
+      ggplot(aes(x= mes, y = Freq)) +
+      geom_point(size=1)+
+      geom_line()+
+      scale_x_date(breaks ="1 year", date_labels = "%m-%Y") +
+      # scale_color_manual("Lotação", values = cores_Assec[c(4)])+
+      ylab("Frequência")+
+      xlab("Mês-Ano")+
+      theme_classic() +
+      theme(
+        axis.text.x = element_text(angle = 60, vjust = .5),
+        legend.text = element_text(size=8),
+        legend.position="top")
+  })
+
+
+
 
 shinyApp(ui, server)
