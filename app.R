@@ -641,6 +641,7 @@ server <- function(input, output, session) {
   })
 
   output$graf_prev_evol<- renderPlot({
+
     dados_prev_filtrados() |>
       group_by(mes = floor_date(data_inicio_licenca, "month")) |>
       #group_by(mes = floor_date(`Data início licença`, "month")) |>
@@ -657,9 +658,10 @@ server <- function(input, output, session) {
         axis.text.x = element_text(angle = 60, vjust = .5),
         legend.text = element_text(size=8),
         legend.position="top")
+
   })
 
-
+}
 
 
 shinyApp(ui, server)
