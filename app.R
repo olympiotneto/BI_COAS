@@ -240,6 +240,29 @@ ui <- bs4DashPage(
             )
           )
         ),
+        fluidRow(
+          bs4Card(
+            width = 4,
+            title = "Idade X Sexo",
+            echarts4r::echarts4rOutput(
+              outputId ="graf_casos_idade_sexo"
+            )
+          ),
+          bs4Card(
+            width = 4,
+            title = "Idade X Lotação",
+            echarts4r::echarts4rOutput(
+              outputId ="graf_casos_idade_lot"
+            )
+          ),
+          bs4Card(
+            width = 4,
+            title = "Idade X Situação Funcional",
+            echarts4r::echarts4rOutput(
+              outputId ="graf_casos_idade_sitf"
+            )
+          )
+        ),
         downloadButton(
           outputId = "down_casos",
           label = "Download dados filtrados"
@@ -325,7 +348,7 @@ ui <- bs4DashPage(
               outputId = "graf_prev_evol"
             )
             )
-          )
+          ),
         )
       )
     )
@@ -439,14 +462,17 @@ server <- function(input, output, session) {
   output$graf_casos_sitf <- echarts4r::renderEcharts4r({
     dados_casos_filtrados() |>
       summarise(n = n(), .by = situacao) |>
-      mutate(prop = n/sum(n)) |>
+      mutate(prop = n/sum(n),
+             h = RColorBrewer::brewer.pal(5, "GnBu")) |>
       arrange(desc(n)) |>
+      ungroup() |>
       echarts4r::e_chart(
         x = situacao
       ) |>
       echarts4r::e_bar(
         serie = n,
         legend = FALSE) |>
+      echarts4r::e_add_nested("itemStyle", h) |>
       echarts4r::e_tooltip()
   })
 
@@ -464,6 +490,25 @@ server <- function(input, output, session) {
       echarts4r::e_tooltip()
 
   })
+
+  output$graf_casos_idade_sexo<- echarts4r::renderEcharts4r({
+    browser()
+    dados_casos_filtrados() |>
+      group_by(situacao) |>
+      summarise(Media = mean(idade_inicio_licenca,na.rm = TRUE))|>
+      mutate(h = RColorBrewer::brewer.pal(5, "GnBu")) |>
+      ungroup() |>
+      echarts4r::e_chart(x = situacao
+      ) |>
+      echarts4r::e_bar(
+        serie = Media
+        ) |>
+      echarts4r::e_legend(show = FALSE) |>
+      echarts4r::e_add_nested("itemStyle", h) |>
+      echarts4r::e_tooltip()
+
+  })
+
 
   # Aba Visão Geral - Servidor ----------------------------------------------------
 
@@ -627,7 +672,7 @@ server <- function(input, output, session) {
       session =  session,
       inputId = "cid_subcat_prev",
       choices = choices_subcat,
-      selected =choices_subcat
+      selected = choices_subcat
     )
 
   })
