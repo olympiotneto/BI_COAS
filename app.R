@@ -333,8 +333,8 @@ ui <- bs4DashPage(
                   selected = c(
                     year(as.Date(data_inicial)),
                     year(as.Date(data_final)
-                         )
-                    ),
+                    )
+                  ),
                   grid = TRUE
                 )
               )
@@ -348,12 +348,12 @@ ui <- bs4DashPage(
             plotOutput(
               outputId = "graf_prev_evol"
             )
-            )
-          ),
-        )
+          )
+        ),
       )
     )
   )
+)
 
 
 
@@ -380,28 +380,28 @@ server <- function(input, output, session) {
         data_inicio_licenca<=input$casos_data[2])
   })
 
-observeEvent(dados_casos_filtrados(),{
-  freezeReactiveValue(input,"cid_cat")
-  list_cid_cat <- dados_casos_filtrados() |>
-    mutate(cid_grupo = as.character(cid_grupo)) |>
-    filter(!is.na(cid_grupo)) |>
-    pull(cid_grupo) |>
-    unique() |>
-    sort()
+  observeEvent(dados_casos_filtrados(),{
+    freezeReactiveValue(input,"cid_cat")
+    list_cid_cat <- dados_casos_filtrados() |>
+      mutate(cid_grupo = as.character(cid_grupo)) |>
+      filter(!is.na(cid_grupo)) |>
+      pull(cid_grupo) |>
+      unique() |>
+      sort()
 
-  shinyWidgets::updatePickerInput(
-    inputId = "cid_cat",
-    choices = list_cid_cat,
-    selected = list_cid_cat[1]
-  )
+    shinyWidgets::updatePickerInput(
+      inputId = "cid_cat",
+      choices = list_cid_cat,
+      selected = list_cid_cat[1]
+    )
 
-})
+  })
 
-#Esse valor reativo já leva em conta o filtro de data e CID
-dados_c_filtrados_2 <- reactive({
-  dados_casos_filtrados() |>
-    filter(cid_grupo %in% input$cid_cat)
-})
+  #Esse valor reativo já leva em conta o filtro de data e CID
+  dados_c_filtrados_2 <- reactive({
+    dados_casos_filtrados() |>
+      filter(cid_grupo %in% input$cid_cat)
+  })
 
 
   #### Donwload dos dados
@@ -451,7 +451,7 @@ dados_c_filtrados_2 <- reactive({
                                     '<br />porcentagem: ' +  (vals[1]*100).toFixed(2) + '%')}")
       ) |>
       echarts4r::e_color(
-         c("pink", "royalblue")
+        c("pink", "royalblue")
       )
   })
 
@@ -479,8 +479,8 @@ dados_c_filtrados_2 <- reactive({
                                     var vals = params.name.split(';')
                                     return('<strong>' + vals[0] +
                                     '</strong><br />n: ' + params.value +
-                                    '<br />porcentagem: ' +  (vals[1]*100).toFixed(2) + '%')}")
-      )
+                                    '<br />porcentagem: ' +  (vals[1]*100).toFixed(2) + '%')}")) |>
+      echarts4r::e_color(cores_Assec[c(2,3)])
   })
 
   output$graf_casos_sitf <- echarts4r::renderEcharts4r({
@@ -489,7 +489,8 @@ dados_c_filtrados_2 <- reactive({
       mutate(prop = n/sum(n),
              # n_situacao = n_distinct(situacao),
              # color = RColorBrewer::brewer.pal(n_situacao, "GnBu")
-              ) |>
+      ) |>
+
       arrange(desc(n)) |>
       # ungroup() |>
       echarts4r::e_chart(
@@ -520,24 +521,27 @@ dados_c_filtrados_2 <- reactive({
   })
 
   output$graf_casos_idade_sexo<- echarts4r::renderEcharts4r({
+
     dados_c_filtrados_2() |>
       group_by(sexo) |>
-      summarise(Media = mean(idade_inicio_licenca,na.rm = TRUE))|>
+      summarise(media = round(mean(idade_inicio_licenca,na.rm = TRUE),2))|>
       # mutate(color = c("pink", "royalblue")) |>
-      # ungroup() |>
+      # ungroup() |
       echarts4r::e_chart(x = sexo
       ) |>
       echarts4r::e_bar(
-        serie = Media
-        ) |>
+        serie = media
+      ) |>
       echarts4r::e_legend(show = FALSE) |>
+
       echarts4r::e_tooltip() |>
       echarts4r::e_color("#253C59")
-      # echarts4r::e_add_nested("itemStyle", color)
+    # echarts4r::e_add_nested("itemStyle", color)
 
   })
 
   output$graf_casos_idade_lot<- echarts4r::renderEcharts4r({
+
     dados_c_filtrados_2() |>
       group_by(lotacao) |>
       summarise(Media = mean(idade_inicio_licenca,na.rm = TRUE))|>
@@ -551,8 +555,43 @@ dados_c_filtrados_2 <- reactive({
       echarts4r::e_legend(show = FALSE) |>
       echarts4r::e_tooltip() |>
       echarts4r::e_color("#253C59")
-      # echarts4r::e_add_nested("itemStyle", color)
+    # echarts4r::e_add_nested("itemStyle", color)
 
+
+  })
+
+  output$graf_casos_idade_lot<- echarts4r::renderEcharts4r({
+    dados_casos_filtrados() |>
+      group_by(lotacao) |>
+      summarise(media = round(mean(idade_inicio_licenca,na.rm = TRUE), 2))|>
+      # mutate(color = cores_Assec[c(2,4)]) |>
+      # ungroup() |>
+      echarts4r::e_chart(x = lotacao
+      ) |>
+      echarts4r::e_bar(
+        serie = media
+      ) |>
+      echarts4r::e_legend(show = FALSE) |>
+      echarts4r::e_tooltip() |>
+      echarts4r::e_color("#253C59")
+    # echarts4r::e_add_nested("itemStyle", color)
+
+  })
+
+  output$graf_casos_idade_sitf <- echarts4r::renderEcharts4r({
+    dados_casos_filtrados() |>
+      group_by(situacao) |>
+      summarise(media = round(mean(idade_inicio_licenca,na.rm = TRUE), 2)) |>
+      ungroup() |>
+      echarts4r::e_chart(
+        x = situacao
+      ) |>
+      echarts4r::e_bar(
+        serie = media,
+        legend = FALSE) |>
+      echarts4r::e_tooltip() |>
+      echarts4r::e_x_axis(axisLabel = list(rotate = 45)) |>
+      echarts4r::e_color("#253C59")
   })
 
 
@@ -704,14 +743,14 @@ dados_c_filtrados_2 <- reactive({
       filter(cat %in% input$cid_cat_prev)
 
     choices_subcat <- set_names(sub_cat_prev$subcat,
-                                  paste(sub_cat_prev$subcat,
-                                        sub_cat_prev$descricao,
-                                        sep = "-")
-                                )
-#
-#     sub_cat_prev <- sub_cat_prev |>
-#       pull(subcat) |>
-#       unique()
+                                paste(sub_cat_prev$subcat,
+                                      sub_cat_prev$descricao,
+                                      sep = "-")
+    )
+    #
+    #     sub_cat_prev <- sub_cat_prev |>
+    #       pull(subcat) |>
+    #       unique()
 
 
     shinyWidgets::updatePickerInput(
