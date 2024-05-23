@@ -50,11 +50,21 @@ ui <- bs4DashPage(
           tabName = "vg_licencas"
         )
       ),
+
       bs4SidebarMenuItem(
         text = "Casos",
         tabName = "casos",
-        icon = icon("briefcase-medical")
+        icon = icon("briefcase-medical"),
+        startExpanded = TRUE,
 
+        bs4SidebarMenuSubItem(
+          text = "Distribuição",
+          tabName = "ca_distr"
+        ),
+        bs4SidebarMenuSubItem(
+          text = "Tempo de afastamento",
+          tabName = "ca_afast"
+        )
       ),
       bs4SidebarMenuItem(
         text = "Prevalência",
@@ -66,8 +76,7 @@ ui <- bs4DashPage(
 
   # Rodapé ------------------------------------------------------------------
 
-  footer = bs4DashFooter(left = glue::glue("Data inicial com registro {format(as.Date(data_inicial), '%d-%m-%Y')}"),
-                         right =  glue::glue("Dados atualizados até {format(as.Date(data_final), '%d-%m-%Y')}"),
+  footer = bs4DashFooter(right =  glue::glue("Dados atualizados até {format(as.Date(data_final), '%d-%m-%Y')}"),
                          fixed = TRUE),
   # BODY --------------------------------------------------------------------
   body = bs4DashBody(
@@ -152,7 +161,7 @@ ui <- bs4DashPage(
           plotly::plotlyOutput("vg_serie_nr_lic")
         )
       ),
-      # UI Casos -----------------------------------------------
+      # UI CASOS DISTR -----------------------------------------------
       #Fazer selects com:
       #Grupo de CIDs
       #Periodo
@@ -160,7 +169,8 @@ ui <- bs4DashPage(
       #Lotação: Sercretaria/Cartório/Todos
       #situação funcional
       bs4TabItem(
-        tabName = "casos",
+        tabName = "ca_distr",
+        titlePanel("Distribuição de casos"),
         fluidRow(
           bs4Card(
             title = "Filtros",
@@ -269,6 +279,86 @@ ui <- bs4DashPage(
           label = "Download dados filtrados"
         )
       ),
+
+      # UI CASOS TEMPO AFAST -----------------------------------------------
+
+      bs4TabItem(
+        tabName = "ca_afast",
+        titlePanel("Tempos de afastamento"),
+        fluidRow(
+          bs4Card(
+            title = "Filtros",
+            width = 12,
+            fluidRow(
+              column(
+                5,
+                dateRangeInput(
+                  inputId = "casos_data_t",
+                  label ="Selecione as datas",
+                  start = "2022-01-01",
+                  end = "2022-12-31",
+                  min = as.Date(data_inicial),
+                  max = as.Date(data_final),
+                  separator = " - ",
+                  format = "dd/mm/yyyy",
+                  language = 'pt'
+                )
+              ),
+              column(
+                offset = 2,
+                5,
+                shinyWidgets::pickerInput(
+                  inputId = "cid_cat_t",
+                  label = "Escolha uma ou mais categoria(s) de CID",
+                  choices = NULL,
+                  # selected = "Z76",
+                  options = shinyWidgets::pickerOptions(
+                    actionsBox = TRUE,
+                    deselectAllText = "desmarcar tudo",
+                    selectAllText = "marcar tudo",
+                    liveSearch = TRUE,
+                    noneSelectedText = "Nenhum CID selecionado",
+                    virtualScroll = 100,
+                    width = 600,
+                    size = 5,
+                    header = "Escolha um CID",
+                    hideDisabled = FALSE,
+                    multipleSeparator = "|"
+                  ),
+                  multiple = TRUE
+                )
+              )
+            )
+          )
+        ),
+        fluidRow(
+          bs4Card(
+            title = "Sexo",
+            width = 6,
+            echarts4r::echarts4rOutput(
+              outputId ="graf_ca_tempo_sexo"
+            )
+          ),
+          bs4Card(
+            title = "Lotação",
+            width = 6,
+            echarts4r::echarts4rOutput(
+              outputId ="graf_ca_tempo_lot"
+            )
+          )
+        ),
+        fluidRow(
+          bs4Card(
+            title = "Situação Funcional",
+            width = 12,
+            echarts4r::echarts4rOutput(
+              outputId ="graf_ca_tempo_sitf"
+            )
+          )
+        )
+      ),
+
+
       # UI Prevalência -----------------------------------------------
       #Fazer selects com:
       #Grupo de CIDs e depois selecionar os cids disponíveis
@@ -364,11 +454,11 @@ ui <- bs4DashPage(
 
 server <- function(input, output, session) {
 
-  # Aba Casos - Servidor ----------------------------------------------------
-
-  # Dados filtrados aba casos ------------------------------------------------
 
 
+# Filtro aba casos distribuição  ------------------------------------------------
+
+#Essa parte filtra por data o bd
   dados_casos_filtrados <- reactive({
     dados |>
       # filter(cid_grupo %in% input$cid_cat,
@@ -380,6 +470,7 @@ server <- function(input, output, session) {
         data_inicio_licenca<=input$casos_data[2])
   })
 
+  #essa parte relaciona só os cids que aparecem nas datas especificadas
   observeEvent(dados_casos_filtrados(),{
     freezeReactiveValue(input,"cid_cat")
     list_cid_cat <- dados_casos_filtrados() |>
@@ -389,10 +480,20 @@ server <- function(input, output, session) {
       unique() |>
       sort()
 
+      descricao <- cid_cat |>
+        filter(cat %in% list_cid_cat) |>
+        mutate(nome = paste(cat, descricao, sep="-")) |>
+        pull(nome)
+
+      opcoes_cat <- setNames(list_cid_cat,descricao)
+
+
     shinyWidgets::updatePickerInput(
       inputId = "cid_cat",
-      choices = list_cid_cat,
-      selected = list_cid_cat[1]
+      # choices = list_cid_cat,
+      choices = opcoes_cat,
+      # selected = list_cid_cat[1]
+      selected = opcoes_cat[1]
     )
 
   })
@@ -404,7 +505,7 @@ server <- function(input, output, session) {
   })
 
 
-  #### Donwload dos dados
+  #### Download dos dados
   output$down_casos <- downloadHandler(
     filename = function() {
       paste0("dados_filtrados", ".csv")
@@ -420,8 +521,10 @@ server <- function(input, output, session) {
 
   )
 
+  # Aba CASOS - Distribuição ----------------------------------------------------
 
   output$graf_casos_sexo <- echarts4r::renderEcharts4r({
+    # browser()
     dados_c_filtrados_2() |>
       summarise(n = n(), .by = sexo) |>
       mutate(prop = round(n/sum(n),2),
@@ -561,7 +664,7 @@ server <- function(input, output, session) {
   })
 
   output$graf_casos_idade_lot<- echarts4r::renderEcharts4r({
-    dados_casos_filtrados() |>
+    dados_c_filtrados_2() |>
       group_by(lotacao) |>
       summarise(media = round(mean(idade_inicio_licenca,na.rm = TRUE), 2))|>
       # mutate(color = cores_Assec[c(2,4)]) |>
@@ -579,7 +682,7 @@ server <- function(input, output, session) {
   })
 
   output$graf_casos_idade_sitf <- echarts4r::renderEcharts4r({
-    dados_casos_filtrados() |>
+    dados_c_filtrados_2() |>
       group_by(situacao) |>
       summarise(media = round(mean(idade_inicio_licenca,na.rm = TRUE), 2)) |>
       ungroup() |>
@@ -594,6 +697,109 @@ server <- function(input, output, session) {
       echarts4r::e_color("#253C59")
   })
 
+
+  # Aba CASOS - TEMPOS ----------------------------------------------------
+
+
+  # Filtro aba casos tempos ------------------------------------------------
+
+  #Essa parte filtra por data o bd
+  dados_casos_t_filtrados <- reactive({
+    dados |>
+      # filter(cid_grupo %in% input$cid_cat,
+      #        data_inicio_licenca>=input$casos_data[1],
+      #        data_inicio_licenca<=input$casos_data[2]
+      # )
+      filter(
+        data_inicio_licenca>=input$casos_data_t[1],
+        data_inicio_licenca<=input$casos_data_t[2])
+  })
+
+  #essa parte relaciona só os cids que aparecem nas datas especificadas
+  observeEvent(dados_casos_t_filtrados(),{
+    freezeReactiveValue(input,"cid_cat_t")
+    list_cid_cat_t <- dados_casos_t_filtrados() |>
+      mutate(cid_grupo = as.character(cid_grupo)) |>
+      filter(!is.na(cid_grupo)) |>
+      pull(cid_grupo) |>
+      unique() |>
+      sort()
+
+    descricao <- cid_cat |>
+      filter(cat %in% list_cid_cat_t) |>
+      mutate(nome = paste(cat, descricao, sep="-")) |>
+      pull(nome)
+
+    opcoes_cat_t <- setNames(list_cid_cat_t,descricao)
+
+
+    shinyWidgets::updatePickerInput(
+      inputId = "cid_cat_t",
+      # choices = list_cid_cat,
+      choices = opcoes_cat_t,
+      # selected = list_cid_cat[1]
+      selected = opcoes_cat_t[1]
+    )
+
+  })
+
+  #Esse valor reativo já leva em conta o filtro de data e CID
+  dados_c_filtrados_2_t <- reactive({
+    dados_casos_t_filtrados() |>
+      filter(cid_grupo %in% input$cid_cat_t)
+  })
+
+
+
+  output$graf_ca_tempo_sexo <- echarts4r::renderEcharts4r({
+    dados_c_filtrados_2_t() |>
+      group_by(sexo) |>
+      summarise(media = round(mean(numero_de_dias,na.rm = TRUE), 2)) |>
+      ungroup() |>
+      echarts4r::e_chart(
+        x = sexo
+      ) |>
+      echarts4r::e_bar(
+        serie = media,
+        legend = FALSE) |>
+      echarts4r::e_tooltip() |>
+      echarts4r::e_x_axis(axisLabel = list(rotate = 0)) |>
+      echarts4r::e_color(cores_Assec[1])
+  })
+
+
+  output$graf_ca_tempo_lot <- echarts4r::renderEcharts4r({
+    dados_c_filtrados_2_t() |>
+      group_by(lotacao) |>
+      summarise(media = round(mean(numero_de_dias,na.rm = TRUE), 2)) |>
+      ungroup() |>
+      echarts4r::e_chart(
+        x = lotacao
+      ) |>
+      echarts4r::e_bar(
+        serie = media,
+        legend = FALSE) |>
+      echarts4r::e_tooltip() |>
+      echarts4r::e_x_axis(axisLabel = list(rotate = 0)) |>
+      echarts4r::e_color(cores_Assec[4])
+  })
+
+
+  output$graf_ca_tempo_sitf <- echarts4r::renderEcharts4r({
+    dados_c_filtrados_2_t() |>
+      group_by(situacao) |>
+      summarise(media = round(mean(numero_de_dias,na.rm = TRUE), 2)) |>
+      ungroup() |>
+      echarts4r::e_chart(
+        x = situacao
+      ) |>
+      echarts4r::e_bar(
+        serie = media,
+        legend = FALSE) |>
+      echarts4r::e_tooltip() |>
+      echarts4r::e_x_axis(axisLabel = list(rotate = 0)) |>
+      echarts4r::e_color(cores_Assec[5])
+  })
 
   # Aba Visão Geral - Servidor ----------------------------------------------------
 
