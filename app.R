@@ -451,11 +451,7 @@ server <- function(input, output, session) {
                                     '<br />porcentagem: ' +  (vals[1]*100).toFixed(2) + '%')}")
       ) |>
       echarts4r::e_color(
-        <<<<<<< HEAD
         c("pink", "royalblue")
-        =======
-          c( "pink", "royalblue")
-        >>>>>>> f6908db1a6da63266cc2fcb03e307af22c47e6d3
       )
   })
 
@@ -484,20 +480,17 @@ server <- function(input, output, session) {
                                     return('<strong>' + vals[0] +
                                     '</strong><br />n: ' + params.value +
                                     '<br />porcentagem: ' +  (vals[1]*100).toFixed(2) + '%')}")) |>
-      echarts4r::e_color(cores_Assec[c(2,4)])
+      echarts4r::e_color(cores_Assec[c(2,3)])
   })
 
   output$graf_casos_sitf <- echarts4r::renderEcharts4r({
     dados_c_filtrados_2() |>
       summarise(n = n(), .by = situacao) |>
-      <<<<<<< HEAD
     mutate(prop = n/sum(n),
            # n_situacao = n_distinct(situacao),
            # color = RColorBrewer::brewer.pal(n_situacao, "GnBu")
     ) |>
-      =======
-      mutate(prop = n/sum(n)) |>
-      >>>>>>> f6908db1a6da63266cc2fcb03e307af22c47e6d3
+
     arrange(desc(n)) |>
       # ungroup() |>
       echarts4r::e_chart(
@@ -506,14 +499,9 @@ server <- function(input, output, session) {
       echarts4r::e_bar(
         serie = n,
         legend = FALSE) |>
-      <<<<<<< HEAD
     # echarts4r::e_add_nested("itemStyle", color) |>
     echarts4r::e_tooltip() |>
       echarts4r::e_color("#253C59")
-    =======
-      echarts4r::e_tooltip() |>
-      echarts4r::e_color(cores_Assec[c(2,4)])
-    >>>>>>> f6908db1a6da63266cc2fcb03e307af22c47e6d3
   })
 
   output$graf_casos_cid <- echarts4r::renderEcharts4r({
@@ -533,27 +521,19 @@ server <- function(input, output, session) {
   })
 
   output$graf_casos_idade_sexo<- echarts4r::renderEcharts4r({
-    <<<<<<< HEAD
+
     dados_c_filtrados_2() |>
       group_by(sexo) |>
-      summarise(Media = mean(idade_inicio_licenca,na.rm = TRUE))|>
-      # mutate(color = c("pink", "royalblue")) |>
-      # ungroup() |>
-      =======
-
-      dados_casos_filtrados() |>
-      group_by(sexo) |>
       summarise(media = round(mean(idade_inicio_licenca,na.rm = TRUE),2))|>
-      mutate(color = c("pink", "royalblue")) |>
-      ungroup() |>
-      >>>>>>> f6908db1a6da63266cc2fcb03e307af22c47e6d3
+      # mutate(color = c("pink", "royalblue")) |>
+      # ungroup() |
     echarts4r::e_chart(x = sexo
     ) |>
       echarts4r::e_bar(
         serie = media
       ) |>
       echarts4r::e_legend(show = FALSE) |>
-      <<<<<<< HEAD
+
     echarts4r::e_tooltip() |>
       echarts4r::e_color("#253C59")
     # echarts4r::e_add_nested("itemStyle", color)
@@ -561,6 +541,7 @@ server <- function(input, output, session) {
   })
 
   output$graf_casos_idade_lot<- echarts4r::renderEcharts4r({
+
     dados_c_filtrados_2() |>
       group_by(lotacao) |>
       summarise(Media = mean(idade_inicio_licenca,na.rm = TRUE))|>
@@ -575,10 +556,7 @@ server <- function(input, output, session) {
       echarts4r::e_tooltip() |>
       echarts4r::e_color("#253C59")
     # echarts4r::e_add_nested("itemStyle", color)
-    =======
-      echarts4r::e_add_nested("itemStyle", color) |>
-      echarts4r::e_tooltip()
-    >>>>>>> f6908db1a6da63266cc2fcb03e307af22c47e6d3
+
 
   })
 
@@ -586,8 +564,8 @@ server <- function(input, output, session) {
     dados_casos_filtrados() |>
       group_by(lotacao) |>
       summarise(media = round(mean(idade_inicio_licenca,na.rm = TRUE), 2))|>
-      mutate(color = cores_Assec[c(2,4)]) |>
-      ungroup() |>
+      # mutate(color = cores_Assec[c(2,4)]) |>
+      # ungroup() |>
       echarts4r::e_chart(x = lotacao
       ) |>
       echarts4r::e_bar(
@@ -595,7 +573,8 @@ server <- function(input, output, session) {
       ) |>
       echarts4r::e_legend(show = FALSE) |>
       echarts4r::e_tooltip() |>
-      echarts4r::e_add_nested("itemStyle", color)
+      echarts4r::e_color("#253C59")
+      # echarts4r::e_add_nested("itemStyle", color)
 
   })
 
@@ -611,7 +590,8 @@ server <- function(input, output, session) {
         serie = media,
         legend = FALSE) |>
       echarts4r::e_tooltip() |>
-      echarts4r::e_x_axis(axisLabel = list(rotate = 45))
+      echarts4r::e_x_axis(axisLabel = list(rotate = 45)) |>
+      echarts4r::e_color("#253C59")
   })
 
 
