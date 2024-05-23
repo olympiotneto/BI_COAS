@@ -84,7 +84,7 @@ ui <- bs4DashPage(
       #Total de servidores
       #Sexo
       #Lotação
-      #Situação funcional
+      #Situação funcional (Não vai existir mais)
       #Gráfico no final com a evolução mensal
       bs4TabItem(
         tabName = "vg_servidores",
@@ -168,11 +168,26 @@ ui <- bs4DashPage(
             fluidRow(
               column(
                 5,
+                dateRangeInput(
+                  inputId = "casos_data",
+                  label ="Selecione as datas",
+                  start = "2022-01-01",
+                  end = "2022-12-31",
+                  min = as.Date(data_inicial),
+                  max = as.Date(data_final),
+                  separator = " - ",
+                  format = "dd/mm/yyyy",
+                  language = 'pt'
+                )
+              ),
+              column(
+                offset = 2,
+                5,
                 shinyWidgets::pickerInput(
                   inputId = "cid_cat",
                   label = "Escolha uma ou mais categoria(s) de CID",
-                  choices = opcoes_cat,
-                  selected = "Z76",
+                  choices = NULL,
+                  # selected = "Z76",
                   options = shinyWidgets::pickerOptions(
                     actionsBox = TRUE,
                     deselectAllText = "desmarcar tudo",
@@ -187,20 +202,6 @@ ui <- bs4DashPage(
                     multipleSeparator = "|"
                   ),
                   multiple = TRUE
-                )
-              ),
-              column(
-                5,
-                dateRangeInput(
-                  inputId = "casos_data",
-                  label ="Selecione as datas",
-                  start = "2022-01-01",
-                  end = "2022-12-31",
-                  min = as.Date(data_inicial),
-                  max = as.Date(data_final),
-                  separator = " - ",
-                  format = "dd/mm/yyyy",
-                  language = 'pt'
                 )
               )
             )
@@ -370,14 +371,37 @@ server <- function(input, output, session) {
 
   dados_casos_filtrados <- reactive({
     dados |>
-      filter(cid_grupo %in% input$cid_cat,
-             data_inicio_licenca>=input$casos_data[1],
-             data_inicio_licenca<=input$casos_data[2]
-      )
+      # filter(cid_grupo %in% input$cid_cat,
+      #        data_inicio_licenca>=input$casos_data[1],
+      #        data_inicio_licenca<=input$casos_data[2]
+      # )
+      filter(
+        data_inicio_licenca>=input$casos_data[1],
+        data_inicio_licenca<=input$casos_data[2])
   })
 
+observeEvent(dados_casos_filtrados(),{
+  freezeReactiveValue(input,"cid_cat")
+  list_cid_cat <- dados_casos_filtrados() |>
+    mutate(cid_grupo = as.character(cid_grupo)) |>
+    filter(!is.na(cid_grupo)) |>
+    pull(cid_grupo) |>
+    unique() |>
+    sort()
 
+  shinyWidgets::updatePickerInput(
+    inputId = "cid_cat",
+    choices = list_cid_cat,
+    selected = list_cid_cat[1]
+  )
 
+})
+
+#Esse valor reativo já leva em conta o filtro de data e CID
+dados_c_filtrados_2 <- reactive({
+  dados_casos_filtrados() |>
+    filter(cid_grupo %in% input$cid_cat)
+})
 
 
   #### Donwload dos dados
@@ -386,19 +410,19 @@ server <- function(input, output, session) {
       paste0("dados_filtrados", ".csv")
     },
     content = function(file) {
-      dados_down_filt <- dados_casos_filtrados() |>
+      dados_down_filt <- dados_c_filtrados_2() |>
         left_join(cid_cat, by = c("cid_grupo"="cat")) |>
         group_by(cid_grupo,descricao,sexo,lotacao,situacao) |>
         summarise(freq = n()) |>
         rename("categoria_Cid" = cid_grupo)
       readr::write_excel_csv2(dados_down_filt, file)
     }
+
   )
 
 
   output$graf_casos_sexo <- echarts4r::renderEcharts4r({
-
-    dados_casos_filtrados() |>
+    dados_c_filtrados_2() |>
       summarise(n = n(), .by = sexo) |>
       mutate(prop = round(n/sum(n),2),
              nome = paste(sexo,prop,sep=";")) |>
@@ -427,12 +451,12 @@ server <- function(input, output, session) {
                                     '<br />porcentagem: ' +  (vals[1]*100).toFixed(2) + '%')}")
       ) |>
       echarts4r::e_color(
-        c("pink", "royalblue")
+         c("pink", "royalblue")
       )
   })
 
   output$graf_casos_lot <- echarts4r::renderEcharts4r({
-    dados_casos_filtrados() |>
+    dados_c_filtrados_2() |>
       summarise(n = n(), .by = lotacao) |>
       mutate(prop = round(n/sum(n),2),
              nome = paste(lotacao,prop,sep=";")) |>
@@ -460,24 +484,27 @@ server <- function(input, output, session) {
   })
 
   output$graf_casos_sitf <- echarts4r::renderEcharts4r({
-    dados_casos_filtrados() |>
+    dados_c_filtrados_2() |>
       summarise(n = n(), .by = situacao) |>
       mutate(prop = n/sum(n),
-             h = RColorBrewer::brewer.pal(5, "GnBu")) |>
+             # n_situacao = n_distinct(situacao),
+             # color = RColorBrewer::brewer.pal(n_situacao, "GnBu")
+              ) |>
       arrange(desc(n)) |>
-      ungroup() |>
+      # ungroup() |>
       echarts4r::e_chart(
         x = situacao
       ) |>
       echarts4r::e_bar(
         serie = n,
         legend = FALSE) |>
-      echarts4r::e_add_nested("itemStyle", h) |>
-      echarts4r::e_tooltip()
+      # echarts4r::e_add_nested("itemStyle", color) |>
+      echarts4r::e_tooltip() |>
+      echarts4r::e_color("#253C59")
   })
 
   output$graf_casos_cid <- echarts4r::renderEcharts4r({
-    dados_casos_filtrados() |>
+    dados_c_filtrados_2() |>
       summarise(n = n(), .by = cid_grupo) |>
       mutate(prop = n/sum(n)) |>
       arrange(desc(n)) |>
@@ -487,25 +514,44 @@ server <- function(input, output, session) {
       echarts4r::e_bar(
         serie = n,
         legend = FALSE) |>
-      echarts4r::e_tooltip()
+      echarts4r::e_tooltip() |>
+      echarts4r::e_color("#253C59")
 
   })
 
   output$graf_casos_idade_sexo<- echarts4r::renderEcharts4r({
-    browser()
-    dados_casos_filtrados() |>
-      group_by(situacao) |>
+    dados_c_filtrados_2() |>
+      group_by(sexo) |>
       summarise(Media = mean(idade_inicio_licenca,na.rm = TRUE))|>
-      mutate(h = RColorBrewer::brewer.pal(5, "GnBu")) |>
-      ungroup() |>
-      echarts4r::e_chart(x = situacao
+      # mutate(color = c("pink", "royalblue")) |>
+      # ungroup() |>
+      echarts4r::e_chart(x = sexo
       ) |>
       echarts4r::e_bar(
         serie = Media
         ) |>
       echarts4r::e_legend(show = FALSE) |>
-      echarts4r::e_add_nested("itemStyle", h) |>
-      echarts4r::e_tooltip()
+      echarts4r::e_tooltip() |>
+      echarts4r::e_color("#253C59")
+      # echarts4r::e_add_nested("itemStyle", color)
+
+  })
+
+  output$graf_casos_idade_lot<- echarts4r::renderEcharts4r({
+    dados_c_filtrados_2() |>
+      group_by(lotacao) |>
+      summarise(Media = mean(idade_inicio_licenca,na.rm = TRUE))|>
+      # mutate(color = c("darkgreen", "royalblue")) |>
+      # ungroup() |>
+      echarts4r::e_chart(x = lotacao
+      ) |>
+      echarts4r::e_bar(
+        serie = Media
+      ) |>
+      echarts4r::e_legend(show = FALSE) |>
+      echarts4r::e_tooltip() |>
+      echarts4r::e_color("#253C59")
+      # echarts4r::e_add_nested("itemStyle", color)
 
   })
 
@@ -709,4 +755,4 @@ server <- function(input, output, session) {
 }
 
 
-shinyApp(ui, server)
+shinyApp(ui, server, options = list(launch.browser=FALSE, port = 4242))
