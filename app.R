@@ -486,12 +486,21 @@ server <- function(input, output, session) {
   output$graf_casos_sitf <- echarts4r::renderEcharts4r({
     dados_c_filtrados_2() |>
       summarise(n = n(), .by = situacao) |>
+<<<<<<< HEAD
     mutate(prop = n/sum(n),
            # n_situacao = n_distinct(situacao),
            # color = RColorBrewer::brewer.pal(n_situacao, "GnBu")
     ) |>
 
     arrange(desc(n)) |>
+=======
+      mutate(prop = n/sum(n),
+             # n_situacao = n_distinct(situacao),
+             # color = RColorBrewer::brewer.pal(n_situacao, "GnBu")
+      ) |>
+
+      arrange(desc(n)) |>
+>>>>>>> b354a866760242e8312fa4f36b73498763289b58
       # ungroup() |>
       echarts4r::e_chart(
         x = situacao
@@ -499,8 +508,13 @@ server <- function(input, output, session) {
       echarts4r::e_bar(
         serie = n,
         legend = FALSE) |>
+<<<<<<< HEAD
     # echarts4r::e_add_nested("itemStyle", color) |>
     echarts4r::e_tooltip() |>
+=======
+      # echarts4r::e_add_nested("itemStyle", color) |>
+      echarts4r::e_tooltip() |>
+>>>>>>> b354a866760242e8312fa4f36b73498763289b58
       echarts4r::e_color("#253C59")
   })
 
@@ -527,14 +541,23 @@ server <- function(input, output, session) {
       summarise(media = round(mean(idade_inicio_licenca,na.rm = TRUE),2))|>
       # mutate(color = c("pink", "royalblue")) |>
       # ungroup() |
+<<<<<<< HEAD
     echarts4r::e_chart(x = sexo
     ) |>
+=======
+      echarts4r::e_chart(x = sexo
+      ) |>
+>>>>>>> b354a866760242e8312fa4f36b73498763289b58
       echarts4r::e_bar(
         serie = media
       ) |>
       echarts4r::e_legend(show = FALSE) |>
 
+<<<<<<< HEAD
     echarts4r::e_tooltip() |>
+=======
+      echarts4r::e_tooltip() |>
+>>>>>>> b354a866760242e8312fa4f36b73498763289b58
       echarts4r::e_color("#253C59")
     # echarts4r::e_add_nested("itemStyle", color)
 
@@ -574,7 +597,11 @@ server <- function(input, output, session) {
       echarts4r::e_legend(show = FALSE) |>
       echarts4r::e_tooltip() |>
       echarts4r::e_color("#253C59")
+<<<<<<< HEAD
       # echarts4r::e_add_nested("itemStyle", color)
+=======
+    # echarts4r::e_add_nested("itemStyle", color)
+>>>>>>> b354a866760242e8312fa4f36b73498763289b58
 
   })
 

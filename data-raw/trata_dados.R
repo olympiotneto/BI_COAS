@@ -45,6 +45,7 @@ dados <- dados |>
       other_level = "OUTROS"
 
     )) |>
+
   janitor::clean_names()
 
 saveRDS(
