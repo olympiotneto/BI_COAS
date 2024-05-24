@@ -64,6 +64,10 @@ ui <- bs4DashPage(
         bs4SidebarMenuSubItem(
           text = "Tempo de afastamento",
           tabName = "ca_afast"
+        ),
+        bs4SidebarMenuSubItem(
+          text = "Estatísticas de Servidores",
+          tabName = "ca_serv"
         )
       ),
       bs4SidebarMenuItem(
@@ -122,7 +126,9 @@ ui <- bs4DashPage(
           width = 12,
           title = "Servidores com licenças concedidas por ano",
           collapsible = FALSE,
-          plotly::plotlyOutput("vg_serie_nr_serv")
+          echarts4r::echarts4rOutput(
+            outputId ="vg_serie_nr_serv"
+          )
         )
       ),
       # UI VISAO GERAL LICENÇAS -----------------------------------------------
@@ -158,7 +164,10 @@ ui <- bs4DashPage(
           width = 12,
           title = "Número de licenças concedidas por ano",
           collapsible = FALSE,
-          plotly::plotlyOutput("vg_serie_nr_lic")
+          # plotly::plotlyOutput("vg_serie_nr_lic")
+          echarts4r::echarts4rOutput(
+            outputId ="vg_serie_nr_lic"
+          )
         )
       ),
       # UI CASOS DISTR -----------------------------------------------
@@ -170,7 +179,7 @@ ui <- bs4DashPage(
       #situação funcional
       bs4TabItem(
         tabName = "ca_distr",
-        titlePanel("Distribuição de casos"),
+        titlePanel(HTML("Distribuição de casos <br> Licenças")),
         fluidRow(
           bs4Card(
             title = "Filtros",
@@ -284,7 +293,7 @@ ui <- bs4DashPage(
 
       bs4TabItem(
         tabName = "ca_afast",
-        titlePanel("Tempos de afastamento"),
+        titlePanel(HTML("Tempos de afastamento <br>Licenças")),
         fluidRow(
           bs4Card(
             title = "Filtros",
@@ -346,17 +355,93 @@ ui <- bs4DashPage(
               outputId ="graf_ca_tempo_lot"
             )
           )
-        ),
-        fluidRow(
-          bs4Card(
-            title = "Situação Funcional",
-            width = 12,
-            echarts4r::echarts4rOutput(
-              outputId ="graf_ca_tempo_sitf"
-            )
-          )
         )
       ),
+
+# UI CASOS SERVIDORES  -----------------------------------------------
+bs4TabItem(
+  tabName = "ca_serv",
+  titlePanel("Estatísticas de Servidores"),
+  fluidRow(
+    bs4Card(
+      title = "Filtros",
+      width = 12,
+      fluidRow(
+        column(
+          5,
+          dateRangeInput(
+            inputId = "casos_data_serv",
+            label ="Selecione as datas",
+            start = "2022-01-01",
+            end = "2022-12-31",
+            min = as.Date(data_inicial),
+            max = as.Date(data_final),
+            separator = " - ",
+            format = "dd/mm/yyyy",
+            language = 'pt'
+          )
+        ),
+        column(
+          offset = 2,
+          5,
+          shinyWidgets::pickerInput(
+            inputId = "cid_cat_serv",
+            label = "Escolha uma ou mais categoria(s) de CID",
+            choices = NULL,
+            # selected = "Z76",
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              deselectAllText = "desmarcar tudo",
+              selectAllText = "marcar tudo",
+              liveSearch = TRUE,
+              noneSelectedText = "Nenhum CID selecionado",
+              virtualScroll = 100,
+              width = 600,
+              size = 5,
+              header = "Escolha um CID",
+              hideDisabled = FALSE,
+              multipleSeparator = "|"
+            ),
+            multiple = TRUE
+          )
+        )
+      )
+    )
+  ),
+  fluidRow(
+    bs4Card(
+      title = "Sexo",
+      width = 4,
+      echarts4r::echarts4rOutput(
+        outputId ="graf_ca_serv_sexo"
+      )
+    ),
+    bs4Card(
+      title = "Lotação",
+      width = 4,
+      echarts4r::echarts4rOutput(
+        outputId ="graf_ca_serv_lot"
+      )
+    ),
+    bs4Card(
+      title = "Servidores por CID",
+      width = 4,
+      echarts4r::echarts4rOutput(
+        outputId ="graf_ca_serv_cid"
+      )
+    )
+  ),
+  fluidRow(
+    bs4Card(
+      title = "Distribuição por idades",
+      width = 12,
+      echarts4r::echarts4rOutput(
+        outputId ="graf_ca_serv_idade"
+      )
+    )
+  )
+),
+
 
 
       # UI Prevalência -----------------------------------------------
@@ -439,7 +524,7 @@ ui <- bs4DashPage(
               outputId = "graf_prev_evol"
             )
           )
-        ),
+        )
       )
     )
   )
@@ -454,7 +539,7 @@ ui <- bs4DashPage(
 
 server <- function(input, output, session) {
 
-
+# Aba CASOS - Distribuição ----------------------------------------------------
 
 # Filtro aba casos distribuição  ------------------------------------------------
 
@@ -521,7 +606,7 @@ server <- function(input, output, session) {
 
   )
 
-  # Aba CASOS - Distribuição ----------------------------------------------------
+
 
   output$graf_casos_sexo <- echarts4r::renderEcharts4r({
     # browser()
@@ -554,7 +639,7 @@ server <- function(input, output, session) {
                                     '<br />porcentagem: ' +  (vals[1]*100).toFixed(2) + '%')}")
       ) |>
       echarts4r::e_color(
-        c("pink", "royalblue")
+        c("pink","royalblue")
       )
   })
 
@@ -801,6 +886,158 @@ server <- function(input, output, session) {
       echarts4r::e_color(cores_Assec[5])
   })
 
+
+
+  # Aba CASOS - SERVIDORES ----------------------------------------------------
+
+  # Filtro aba casos serv ------------------------------------------------
+
+  #Essa parte filtra por data o bd
+  dados_casos_serv_filtrados <- reactive({
+    dados |>
+      # filter(cid_grupo %in% input$cid_cat,
+      #        data_inicio_licenca>=input$casos_data[1],
+      #        data_inicio_licenca<=input$casos_data[2]
+      # )
+      filter(
+        data_inicio_licenca>=input$casos_data_serv[1],
+        data_inicio_licenca<=input$casos_data_serv[2])
+  })
+
+  #essa parte relaciona só os cids que aparecem nas datas especificadas
+  observeEvent(dados_casos_serv_filtrados(),{
+    freezeReactiveValue(input,"cid_cat_serv")
+    list_cid_cat_serv <- dados_casos_serv_filtrados() |>
+      mutate(cid_grupo = as.character(cid_grupo)) |>
+      filter(!is.na(cid_grupo)) |>
+      pull(cid_grupo) |>
+      unique() |>
+      sort()
+
+    descricao <- cid_cat |>
+      filter(cat %in% list_cid_cat_serv) |>
+      mutate(nome = paste(cat, descricao, sep="-")) |>
+      pull(nome)
+
+    opcoes_cat_serv <- setNames(list_cid_cat_serv,descricao)
+
+
+    shinyWidgets::updatePickerInput(
+      inputId = "cid_cat_serv",
+      # choices = list_cid_cat,
+      choices = opcoes_cat_serv,
+      # selected = list_cid_cat[1]
+      selected = opcoes_cat_serv[1]
+    )
+
+  })
+
+  #Esse valor reativo já leva em conta o filtro de data e CID
+  dados_c_filtrados_2_serv <- reactive({
+    dados_casos_serv_filtrados() |>
+      filter(cid_grupo %in% input$cid_cat_serv)
+  })
+
+  #Gráficos e tabelas
+
+  output$graf_ca_serv_sexo <- echarts4r::renderEcharts4r({
+    # browser()
+    dados_c_filtrados_2_serv() |>
+      summarise(n = n_distinct(codigo), .by = sexo) |>
+      mutate(prop = round(n/sum(n),2),
+             nome = paste(sexo,prop,sep=";")) |>
+      echarts4r::e_chart(
+        x = nome
+      ) |>
+      echarts4r::e_pie(
+        serie = n,
+        radius = c("50%", "70%"),
+        label = list(
+          show=FALSE
+        )
+      ) |>
+      echarts4r::e_legend(
+        formatter = htmlwidgets::JS(
+          "function(nome){
+          var vals = nome.split(';')
+          return(vals[0])}"
+        )
+      ) |>
+      echarts4r::e_tooltip(
+        formatter = htmlwidgets::JS("function(params){
+                                    var vals = params.name.split(';')
+                                    return('<strong>' + vals[0] +
+                                    '</strong><br />n: ' + params.value +
+                                    '<br />porcentagem: ' +  (vals[1]*100).toFixed(2) + '%')}")
+      ) |>
+      echarts4r::e_color(
+        c("pink","royalblue")
+      )
+  })
+
+  output$graf_ca_serv_lot <- echarts4r::renderEcharts4r({
+    dados_c_filtrados_2_serv() |>
+      summarise(n = n_distinct(codigo), .by = lotacao) |>
+      mutate(prop = round(n/sum(n),2),
+             nome = paste(lotacao,prop,sep=";")) |>
+      echarts4r::e_chart(
+        x = nome
+      ) |>
+      echarts4r::e_pie(serie = n,
+                       radius = c("50%", "70%"),
+                       legend = TRUE,
+                       label = list(show=FALSE)) |>
+      echarts4r::e_legend(
+        formatter = htmlwidgets::JS(
+          "function(nome){
+          var vals = nome.split(';')
+          return(vals[0])}"
+        )
+      ) |>
+      echarts4r::e_tooltip(
+        formatter = htmlwidgets::JS("function(params){
+                                    var vals = params.name.split(';')
+                                    return('<strong>' + vals[0] +
+                                    '</strong><br />n: ' + params.value +
+                                    '<br />porcentagem: ' +  (vals[1]*100).toFixed(2) + '%')}")) |>
+      echarts4r::e_color(cores_Assec[c(2,3)])
+  })
+
+  output$graf_ca_serv_cid<- echarts4r::renderEcharts4r({
+    dados_c_filtrados_2_serv() |>
+      summarise(n = n_distinct(codigo), .by = cid_grupo) |>
+      mutate(prop = n/sum(n)) |>
+      arrange(desc(n)) |>
+      echarts4r::e_chart(
+        x = cid_grupo
+      ) |>
+      echarts4r::e_bar(
+        serie = n,
+        legend = FALSE) |>
+      echarts4r::e_tooltip() |>
+      echarts4r::e_color(cores_Assec[2])
+
+  })
+
+  output$graf_ca_serv_idade<- echarts4r::renderEcharts4r({
+    dados_c_filtrados_2_serv() |>
+      group_by(codigo) |>
+      summarise(
+        idade = max(idade_inicio_licenca),
+      ) |>
+      echarts4r::e_charts() |>
+      echarts4r::e_histogram(
+        serie = idade,
+        legend = FALSE) |>
+      echarts4r::e_axis_labels(
+        x = "idade",
+        y = "Freq"
+      ) |>
+      echarts4r::e_tooltip() |>
+      echarts4r::e_color(cores_Assec[2])
+
+  })
+
   # Aba Visão Geral - Servidor ----------------------------------------------------
 
   output$vg_serv_total <- renderbs4ValueBox({
@@ -905,34 +1142,61 @@ server <- function(input, output, session) {
   })
 
   #Gráfico servidores/ano
-
-  output$vg_serie_nr_serv <- plotly::renderPlotly({
-    p <-  dados |>
+  output$vg_serie_nr_serv <- echarts4r::renderEcharts4r({
+    dados |>
       mutate(ano = lubridate::year(data_inicio_licenca)) |>
       summarise(Freq = n_distinct(codigo),.by = ano) |>
       filter(!is.na(ano)) |>
-      ggplot(aes(x = ano, y = Freq)) +
-      geom_bar(stat = "identity", fill = cores_Assec[2], position = "dodge")+
-      ylab("Nº servidores") +
-      scale_x_continuous(name="Ano",breaks = seq(2004,2023,1))+
-      theme_classic() +
-      theme(axis.text.x = element_text(angle = 60, vjust = .5))
-
-    plotly::ggplotly(p)
+      mutate(ano = as.character(ano)) |>
+      arrange(ano) |>
+    #   ggplot(aes(x = ano, y = Freq)) +
+    #   geom_bar(stat = "identity", fill = cores_Assec[2], position = "dodge")+
+    #   ylab("Nº servidores") +
+    #   scale_x_continuous(name="Ano",breaks = seq(2004,2023,1))+
+    #   theme_classic() +
+    #   theme(axis.text.x = element_text(angle = 60, vjust = .5))
+    #
+    # plotly::ggplotly(p)
+      echarts4r::e_charts(
+        x = ano
+      ) |>
+      echarts4r::e_bar(
+        serie = Freq,
+        legend = FALSE) |>
+      echarts4r::e_axis_labels(
+        x = "ano",
+        y = "Freq"
+      ) |>
+      echarts4r::e_tooltip() |>
+      echarts4r::e_color(cores_Assec[2])
   })
 
-  output$vg_serie_nr_lic <- plotly::renderPlotly({
-    p <- dados |>
+  output$vg_serie_nr_lic <- echarts4r::renderEcharts4r({
+    dados |>
       mutate(ano = lubridate::year(data_inicio_licenca)) |>
       summarise(Freq = n(),.by = ano) |>
       filter(!is.na(ano)) |>
-      ggplot(aes(x = ano, y = Freq)) +
-      geom_bar(stat = "identity", fill = cores_Assec[2], position = "dodge")+
-      ylab("Nº servidores") +
-      scale_x_continuous(name="Ano",breaks = seq(2004,2023,1))+
-      theme_classic() +
-      theme(axis.text.x = element_text(angle = 60, vjust = .5))
-    plotly::ggplotly(p)
+      mutate(ano = as.character(ano)) |>
+      arrange(ano) |>
+    #   ggplot(aes(x = ano, y = Freq)) +
+    #   geom_bar(stat = "identity", fill = cores_Assec[2], position = "dodge")+
+    #   ylab("Nº servidores") +
+    #   scale_x_continuous(name="Ano",breaks = seq(2004,2023,1))+
+    #   theme_classic() +
+    #   theme(axis.text.x = element_text(angle = 60, vjust = .5))
+    # plotly::ggplotly(p)
+      echarts4r::e_charts(
+        x = ano
+      ) |>
+      echarts4r::e_bar(
+        serie = Freq,
+        legend = FALSE) |>
+      echarts4r::e_axis_labels(
+        x = "ano",
+        y = "Freq"
+      ) |>
+      echarts4r::e_tooltip() |>
+      echarts4r::e_color(cores_Assec[1])
   })
 
 
