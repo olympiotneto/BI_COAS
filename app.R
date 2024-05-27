@@ -561,16 +561,15 @@ server <- function(input, output, session) {
     list_cid_cat <- dados_casos_filtrados() |>
       mutate(cid_grupo = as.character(cid_grupo)) |>
       filter(!is.na(cid_grupo)) |>
-      pull(cid_grupo) |>
-      unique() |>
-      sort()
+      summarise(cont = n(),.by = cid_grupo)
 
-      descricao <- cid_cat |>
-        filter(cat %in% list_cid_cat) |>
+
+      descricao_temp <- cid_cat |>
+        right_join(list_cid_cat, by = c("cat" = "cid_grupo"))|>
         mutate(nome = paste(cat, descricao, sep="-")) |>
-        pull(nome)
+        arrange(desc(cont))
 
-      opcoes_cat <- setNames(list_cid_cat,descricao)
+      opcoes_cat <- setNames(descricao_temp$cat,descricao_temp$nome)
 
 
     shinyWidgets::updatePickerInput(
@@ -609,7 +608,7 @@ server <- function(input, output, session) {
 
 
   output$graf_casos_sexo <- echarts4r::renderEcharts4r({
-    # browser()
+     # browser()
     dados_c_filtrados_2() |>
       summarise(n = n(), .by = sexo) |>
       mutate(prop = round(n/sum(n),2),
@@ -802,20 +801,18 @@ server <- function(input, output, session) {
 
   #essa parte relaciona só os cids que aparecem nas datas especificadas
   observeEvent(dados_casos_t_filtrados(),{
-    freezeReactiveValue(input,"cid_cat_t")
+    # freezeReactiveValue(input,"cid_cat_t")
     list_cid_cat_t <- dados_casos_t_filtrados() |>
       mutate(cid_grupo = as.character(cid_grupo)) |>
       filter(!is.na(cid_grupo)) |>
-      pull(cid_grupo) |>
-      unique() |>
-      sort()
+      summarise(cont = n(),.by = cid_grupo)
 
-    descricao <- cid_cat |>
-      filter(cat %in% list_cid_cat_t) |>
+    descricao_temp <- cid_cat |>
+      right_join(list_cid_cat_t, by = c("cat" = "cid_grupo"))|>
       mutate(nome = paste(cat, descricao, sep="-")) |>
-      pull(nome)
+      arrange(desc(cont))
 
-    opcoes_cat_t <- setNames(list_cid_cat_t,descricao)
+    opcoes_cat_t <- setNames(descricao_temp$cat,descricao_temp$nome)
 
 
     shinyWidgets::updatePickerInput(
@@ -906,20 +903,23 @@ server <- function(input, output, session) {
 
   #essa parte relaciona só os cids que aparecem nas datas especificadas
   observeEvent(dados_casos_serv_filtrados(),{
-    freezeReactiveValue(input,"cid_cat_serv")
+    # freezeReactiveValue(input,"cid_cat_serv")
     list_cid_cat_serv <- dados_casos_serv_filtrados() |>
       mutate(cid_grupo = as.character(cid_grupo)) |>
       filter(!is.na(cid_grupo)) |>
-      pull(cid_grupo) |>
-      unique() |>
-      sort()
+      summarise(cont = n(),.by = cid_grupo) |>
+      arrange(desc(cont))
 
-    descricao <- cid_cat |>
-      filter(cat %in% list_cid_cat_serv) |>
+      # arrange(desc(cont))
+      # pull(cid_grupo)
+
+    descricao_temp <- cid_cat |>
+      # filter(cat %in% list_cid_cat_serv) |>
+      right_join(list_cid_cat_serv, by = c("cat" = "cid_grupo"))|>
       mutate(nome = paste(cat, descricao, sep="-")) |>
-      pull(nome)
+      arrange(desc(cont))
 
-    opcoes_cat_serv <- setNames(list_cid_cat_serv,descricao)
+    opcoes_cat_serv <- setNames(descricao_temp$cat,descricao_temp$nome)
 
 
     shinyWidgets::updatePickerInput(
@@ -941,7 +941,7 @@ server <- function(input, output, session) {
   #Gráficos e tabelas
 
   output$graf_ca_serv_sexo <- echarts4r::renderEcharts4r({
-    # browser()
+        # browser()
     dados_c_filtrados_2_serv() |>
       summarise(n = n_distinct(codigo), .by = sexo) |>
       mutate(prop = round(n/sum(n),2),
@@ -1004,10 +1004,12 @@ server <- function(input, output, session) {
   })
 
   output$graf_ca_serv_cid<- echarts4r::renderEcharts4r({
+    # browser()
     dados_c_filtrados_2_serv() |>
       summarise(n = n_distinct(codigo), .by = cid_grupo) |>
       mutate(prop = n/sum(n)) |>
       arrange(desc(n)) |>
+
       echarts4r::e_chart(
         x = cid_grupo
       ) |>
