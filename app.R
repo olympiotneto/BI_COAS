@@ -355,6 +355,15 @@ ui <- bs4DashPage(
               outputId ="graf_ca_tempo_lot"
             )
           )
+        ),
+        fluidRow(
+          bs4Card(
+            title = "Tempo de afastamento por grupo CID",
+            width = 12,
+            echarts4r::echarts4rOutput(
+              outputId ="graf_ca_tempo_cid"
+            )
+          )
         )
       ),
 
@@ -518,9 +527,9 @@ bs4TabItem(
         ),
         fluidRow(
           bs4Card(
-            title = "Evolução de licenças",
+            title = "Evolução da quantidade de licenças e servidores",
             width = 12,
-            plotOutput(
+            echarts4r::echarts4rOutput(
               outputId = "graf_prev_evol"
             )
           )
@@ -584,6 +593,9 @@ server <- function(input, output, session) {
 
   #Esse valor reativo já leva em conta o filtro de data e CID
   dados_c_filtrados_2 <- reactive({
+    validate(
+      need(input$cid_cat!= "", "Selecione um ou mais CIDs")
+    )
     dados_casos_filtrados() |>
       filter(cid_grupo %in% input$cid_cat)
   })
@@ -688,6 +700,9 @@ server <- function(input, output, session) {
         legend = FALSE) |>
       # echarts4r::e_add_nested("itemStyle", color) |>
       echarts4r::e_tooltip() |>
+      echarts4r::e_axis_labels(
+        y = "Qtde de licenças"
+      ) |>
       echarts4r::e_color("#253C59")
   })
 
@@ -703,6 +718,9 @@ server <- function(input, output, session) {
         serie = n,
         legend = FALSE) |>
       echarts4r::e_tooltip() |>
+      echarts4r::e_axis_labels(
+        y = "Qtde de licenças"
+      ) |>
       echarts4r::e_color("#253C59")
 
   })
@@ -722,6 +740,9 @@ server <- function(input, output, session) {
       echarts4r::e_legend(show = FALSE) |>
 
       echarts4r::e_tooltip() |>
+      echarts4r::e_axis_labels(
+        y = "Idade (anos)"
+      ) |>
       echarts4r::e_color("#253C59")
     # echarts4r::e_add_nested("itemStyle", color)
 
@@ -741,6 +762,9 @@ server <- function(input, output, session) {
       ) |>
       echarts4r::e_legend(show = FALSE) |>
       echarts4r::e_tooltip() |>
+      echarts4r::e_axis_labels(
+        y = "Idade (anos)"
+      ) |>
       echarts4r::e_color("#253C59")
     # echarts4r::e_add_nested("itemStyle", color)
 
@@ -760,6 +784,9 @@ server <- function(input, output, session) {
       ) |>
       echarts4r::e_legend(show = FALSE) |>
       echarts4r::e_tooltip() |>
+      echarts4r::e_axis_labels(
+        y = "Idade (anos)"
+      ) |>
       echarts4r::e_color("#253C59")
     # echarts4r::e_add_nested("itemStyle", color)
 
@@ -777,6 +804,9 @@ server <- function(input, output, session) {
         serie = media,
         legend = FALSE) |>
       echarts4r::e_tooltip() |>
+      echarts4r::e_axis_labels(
+        y = "Idade (anos)"
+      ) |>
       echarts4r::e_x_axis(axisLabel = list(rotate = 45)) |>
       echarts4r::e_color("#253C59")
   })
@@ -827,6 +857,9 @@ server <- function(input, output, session) {
 
   #Esse valor reativo já leva em conta o filtro de data e CID
   dados_c_filtrados_2_t <- reactive({
+    validate(
+      need(input$cid_cat_t!= "", "Selecione um ou mais CIDs")
+    )
     dados_casos_t_filtrados() |>
       filter(cid_grupo %in% input$cid_cat_t)
   })
@@ -845,7 +878,11 @@ server <- function(input, output, session) {
         serie = media,
         legend = FALSE) |>
       echarts4r::e_tooltip() |>
-      echarts4r::e_x_axis(axisLabel = list(rotate = 0)) |>
+      echarts4r::e_x_axis(axisLabel = list(rotate = 0),
+                          ) |>
+      echarts4r::e_axis_labels(
+        y = "Média de dias"
+      ) |>
       echarts4r::e_color(cores_Assec[1])
   })
 
@@ -863,6 +900,9 @@ server <- function(input, output, session) {
         legend = FALSE) |>
       echarts4r::e_tooltip() |>
       echarts4r::e_x_axis(axisLabel = list(rotate = 0)) |>
+      echarts4r::e_axis_labels(
+        y = "Média de dias"
+      ) |>
       echarts4r::e_color(cores_Assec[4])
   })
 
@@ -881,6 +921,25 @@ server <- function(input, output, session) {
       echarts4r::e_tooltip() |>
       echarts4r::e_x_axis(axisLabel = list(rotate = 0)) |>
       echarts4r::e_color(cores_Assec[5])
+  })
+
+  output$graf_ca_tempo_cid <- echarts4r::renderEcharts4r({
+    dados_c_filtrados_2_t() |>
+      group_by(cid_grupo) |>
+      summarise(media = round(mean(numero_de_dias,na.rm = TRUE), 2)) |>
+      ungroup() |>
+      echarts4r::e_chart(
+        x = cid_grupo
+      ) |>
+      echarts4r::e_bar(
+        serie = media,
+        legend = FALSE) |>
+      echarts4r::e_tooltip() |>
+      echarts4r::e_x_axis(axisLabel = list(rotate = 0)) |>
+      echarts4r::e_axis_labels(
+        y = "Média de dias"
+      ) |>
+      echarts4r::e_color(cores_Assec[3])
   })
 
 
@@ -934,6 +993,9 @@ server <- function(input, output, session) {
 
   #Esse valor reativo já leva em conta o filtro de data e CID
   dados_c_filtrados_2_serv <- reactive({
+    validate(
+      need(input$cid_cat_serv!= "", "Selecione um ou mais CIDs")
+    )
     dados_casos_serv_filtrados() |>
       filter(cid_grupo %in% input$cid_cat_serv)
   })
@@ -1017,6 +1079,9 @@ server <- function(input, output, session) {
         serie = n,
         legend = FALSE) |>
       echarts4r::e_tooltip() |>
+      echarts4r::e_axis_labels(
+        y = "Qtde. servidores"
+      ) |>
       echarts4r::e_color(cores_Assec[2])
 
   })
@@ -1235,6 +1300,9 @@ server <- function(input, output, session) {
   })
 
   dados_prev_filtrados <- reactive({
+    validate(
+      need(input$cid_subcat_prev!= "", "Selecione um ou mais cids")
+    )
     dados |>
       filter(cid %in% input$cid_subcat_prev,
              year(as.Date(data_inicio_licenca))>=input$prev_anos[1],
@@ -1242,26 +1310,43 @@ server <- function(input, output, session) {
       )
   })
 
-  output$graf_prev_evol<- renderPlot({
-
+  output$graf_prev_evol<- echarts4r::renderEcharts4r({
     dados_prev_filtrados() |>
       group_by(mes = floor_date(data_inicio_licenca, "month")) |>
       #group_by(mes = floor_date(`Data início licença`, "month")) |>
-      summarise(Freq = n(), .groups = "drop" )|>
-      ggplot(aes(x= mes, y = Freq)) +
-      geom_point(size=1)+
-      geom_line()+
-      scale_x_date(breaks ="1 year", date_labels = "%m-%Y") +
-      # scale_color_manual("Lotação", values = cores_Assec[c(4)])+
-      ylab("Frequência")+
-      xlab("Mês-Ano")+
-      theme_classic() +
-      theme(
-        axis.text.x = element_text(angle = 60, vjust = .5),
-        legend.text = element_text(size=8),
-        legend.position="top")
+      summarise(Licenças = n(),
+                Serv = n_distinct(codigo),
+                .groups = "drop" ) |>
+      echarts4r::e_charts(x = mes) |>
+      echarts4r::e_area(Licenças) |>
+      echarts4r::e_line(Serv)|>
+      echarts4r::e_locale("PT-BR") |>
+      echarts4r::e_tooltip(trigger = "axis") |>
+      echarts4r::e_color(cores_Assec[c(3,1)])
 
   })
+
+
+  # renderPlot({
+  #
+  #   dados_prev_filtrados() |>
+  #     group_by(mes = floor_date(data_inicio_licenca, "month")) |>
+  #     #group_by(mes = floor_date(`Data início licença`, "month")) |>
+  #     summarise(Freq = n(), .groups = "drop" )|>
+  #     ggplot(aes(x= mes, y = Freq)) +
+  #     geom_point(size=1)+
+  #     geom_line()+
+  #     scale_x_date(breaks ="1 year", date_labels = "%m-%Y") +
+  #     # scale_color_manual("Lotação", values = cores_Assec[c(4)])+
+  #     ylab("Frequência")+
+  #     xlab("Mês-Ano")+
+  #     theme_classic() +
+  #     theme(
+  #       axis.text.x = element_text(angle = 60, vjust = .5),
+  #       legend.text = element_text(size=8),
+  #       legend.position="top")
+  #
+  # })
 
 }
 
