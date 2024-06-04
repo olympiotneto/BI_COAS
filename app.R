@@ -448,6 +448,13 @@ bs4TabItem(
         outputId ="graf_ca_serv_idade"
       )
     )
+  ),
+  fluidRow(
+    bs4Card(
+      title = "Tabelas",
+      width = 12,
+      "ver se coloco alguma tabela aqui"
+    )
   )
 ),
 
@@ -679,7 +686,8 @@ server <- function(input, output, session) {
                                     return('<strong>' + vals[0] +
                                     '</strong><br />n: ' + params.value +
                                     '<br />porcentagem: ' +  (vals[1]*100).toFixed(2) + '%')}")) |>
-      echarts4r::e_color(cores_Assec[c(2,3)])
+      echarts4r::e_color(cores_Assec[c(2,3)]) |>
+      echarts4r::e_toolbox_feature(feature = "saveAsImage")
   })
 
   output$graf_casos_sitf <- echarts4r::renderEcharts4r({
@@ -703,7 +711,8 @@ server <- function(input, output, session) {
       echarts4r::e_axis_labels(
         y = "Qtde de licenças"
       ) |>
-      echarts4r::e_color("#253C59")
+      echarts4r::e_color("#253C59") |>
+      echarts4r::e_toolbox_feature(feature = "saveAsImage")
   })
 
   output$graf_casos_cid <- echarts4r::renderEcharts4r({
@@ -721,7 +730,8 @@ server <- function(input, output, session) {
       echarts4r::e_axis_labels(
         y = "Qtde de licenças"
       ) |>
-      echarts4r::e_color("#253C59")
+      echarts4r::e_color("#253C59") |>
+      echarts4r::e_toolbox_feature(feature = "saveAsImage")
 
   })
 
@@ -743,7 +753,8 @@ server <- function(input, output, session) {
       echarts4r::e_axis_labels(
         y = "Idade (anos)"
       ) |>
-      echarts4r::e_color("#253C59")
+      echarts4r::e_color("#253C59") |>
+      echarts4r::e_toolbox_feature(feature = "saveAsImage")
     # echarts4r::e_add_nested("itemStyle", color)
 
   })
@@ -765,7 +776,8 @@ server <- function(input, output, session) {
       echarts4r::e_axis_labels(
         y = "Idade (anos)"
       ) |>
-      echarts4r::e_color("#253C59")
+      echarts4r::e_color("#253C59") |>
+      echarts4r::e_toolbox_feature(feature = "saveAsImage")
     # echarts4r::e_add_nested("itemStyle", color)
 
 
@@ -787,7 +799,8 @@ server <- function(input, output, session) {
       echarts4r::e_axis_labels(
         y = "Idade (anos)"
       ) |>
-      echarts4r::e_color("#253C59")
+      echarts4r::e_color("#253C59") |>
+      echarts4r::e_toolbox_feature(feature = "saveAsImage")
     # echarts4r::e_add_nested("itemStyle", color)
 
   })
@@ -808,7 +821,8 @@ server <- function(input, output, session) {
         y = "Idade (anos)"
       ) |>
       echarts4r::e_x_axis(axisLabel = list(rotate = 45)) |>
-      echarts4r::e_color("#253C59")
+      echarts4r::e_color("#253C59") |>
+      echarts4r::e_toolbox_feature(feature = "saveAsImage")
   })
 
 
@@ -903,7 +917,8 @@ server <- function(input, output, session) {
       echarts4r::e_axis_labels(
         y = "Média de dias"
       ) |>
-      echarts4r::e_color(cores_Assec[4])
+      echarts4r::e_color(cores_Assec[4]) |>
+      echarts4r::e_toolbox_feature(feature = "saveAsImage")
   })
 
 
@@ -920,7 +935,8 @@ server <- function(input, output, session) {
         legend = FALSE) |>
       echarts4r::e_tooltip() |>
       echarts4r::e_x_axis(axisLabel = list(rotate = 0)) |>
-      echarts4r::e_color(cores_Assec[5])
+      echarts4r::e_color(cores_Assec[5]) |>
+      echarts4r::e_toolbox_feature(feature = "saveAsImage")
   })
 
   output$graf_ca_tempo_cid <- echarts4r::renderEcharts4r({
@@ -939,7 +955,8 @@ server <- function(input, output, session) {
       echarts4r::e_axis_labels(
         y = "Média de dias"
       ) |>
-      echarts4r::e_color(cores_Assec[3])
+      echarts4r::e_color(cores_Assec[3]) |>
+      echarts4r::e_toolbox_feature(feature = "saveAsImage")
   })
 
 
@@ -1034,7 +1051,8 @@ server <- function(input, output, session) {
       ) |>
       echarts4r::e_color(
         c("pink","royalblue")
-      )
+      ) |>
+      echarts4r::e_toolbox_feature(feature = "saveAsImage")
   })
 
   output$graf_ca_serv_lot <- echarts4r::renderEcharts4r({
@@ -1062,7 +1080,8 @@ server <- function(input, output, session) {
                                     return('<strong>' + vals[0] +
                                     '</strong><br />n: ' + params.value +
                                     '<br />porcentagem: ' +  (vals[1]*100).toFixed(2) + '%')}")) |>
-      echarts4r::e_color(cores_Assec[c(2,3)])
+      echarts4r::e_color(cores_Assec[c(2,3)]) |>
+      echarts4r::e_toolbox_feature(feature = "saveAsImage")
   })
 
   output$graf_ca_serv_cid<- echarts4r::renderEcharts4r({
@@ -1082,7 +1101,8 @@ server <- function(input, output, session) {
       echarts4r::e_axis_labels(
         y = "Qtde. servidores"
       ) |>
-      echarts4r::e_color(cores_Assec[2])
+      echarts4r::e_color(cores_Assec[2]) |>
+      echarts4r::e_toolbox_feature(feature = "saveAsImage")
 
   })
 
@@ -1101,7 +1121,8 @@ server <- function(input, output, session) {
         y = "Freq"
       ) |>
       echarts4r::e_tooltip() |>
-      echarts4r::e_color(cores_Assec[2])
+      echarts4r::e_color(cores_Assec[2]) |>
+      echarts4r::e_toolbox_feature(feature = "saveAsImage")
 
   })
 
@@ -1235,7 +1256,8 @@ server <- function(input, output, session) {
         y = "Freq"
       ) |>
       echarts4r::e_tooltip() |>
-      echarts4r::e_color(cores_Assec[2])
+      echarts4r::e_color(cores_Assec[2]) |>
+      echarts4r::e_toolbox_feature(feature = "saveAsImage")
   })
 
   output$vg_serie_nr_lic <- echarts4r::renderEcharts4r({
@@ -1263,7 +1285,8 @@ server <- function(input, output, session) {
         y = "Freq"
       ) |>
       echarts4r::e_tooltip() |>
-      echarts4r::e_color(cores_Assec[1])
+      echarts4r::e_color(cores_Assec[1]) |>
+      echarts4r::e_toolbox_feature(feature = "saveAsImage")
   })
 
 
@@ -1322,7 +1345,8 @@ server <- function(input, output, session) {
       echarts4r::e_line(Serv)|>
       echarts4r::e_locale("PT-BR") |>
       echarts4r::e_tooltip(trigger = "axis") |>
-      echarts4r::e_color(cores_Assec[c(3,1)])
+      echarts4r::e_color(cores_Assec[c(3,1)]) |>
+      echarts4r::e_toolbox_feature(feature = "saveAsImage")
 
   })
 
