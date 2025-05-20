@@ -40,36 +40,33 @@ ui <- bs4DashPage(
         tabName = "visao_geral",
         icon = icon("eye"),
         startExpanded = TRUE,
-
-        bs4SidebarMenuSubItem(
-          text = "Servidores",
-          tabName = "vg_servidores"
-        ),
+          bs4SidebarMenuSubItem(
+            text = "Servidores",
+            tabName = "vg_servidores"
+          ),
         bs4SidebarMenuSubItem(
           text = "Licenças",
           tabName = "vg_licencas"
         )
       ),
-
       bs4SidebarMenuItem(
         text = "Casos",
         tabName = "casos",
         icon = icon("briefcase-medical"),
         startExpanded = TRUE,
-
-        bs4SidebarMenuSubItem(
-          text = "Distribuição",
-          tabName = "ca_distr"
+          bs4SidebarMenuSubItem(
+            text = "Distribuição",
+            tabName = "ca_distr"
+          ),
+          bs4SidebarMenuSubItem(
+            text = "Tempo de afastamento",
+            tabName = "ca_afast"
+          ),
+          bs4SidebarMenuSubItem(
+            text = "Estatísticas de Servidores",
+            tabName = "ca_serv"
+          )
         ),
-        bs4SidebarMenuSubItem(
-          text = "Tempo de afastamento",
-          tabName = "ca_afast"
-        ),
-        bs4SidebarMenuSubItem(
-          text = "Estatísticas de Servidores",
-          tabName = "ca_serv"
-        )
-      ),
       bs4SidebarMenuItem(
         text = "Prevalência",
         tabName = "prevalencia",
@@ -80,8 +77,12 @@ ui <- bs4DashPage(
 
   # Rodapé ------------------------------------------------------------------
 
-  footer = bs4DashFooter(right =  glue::glue("Dados atualizados até {format(as.Date(data_final), '%d-%m-%Y')}"),
-                         fixed = TRUE),
+  footer = bs4DashFooter(
+    right =  glue::glue("Dados atualizados até {format(as.Date(data_final),
+                        '%d-%m-%Y')}"
+                        ),
+    fixed = TRUE
+  ),
   # BODY --------------------------------------------------------------------
   body = bs4DashBody(
     tags$head(
