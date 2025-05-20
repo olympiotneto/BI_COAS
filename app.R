@@ -131,7 +131,7 @@ ui <- bs4DashPage(
             outputId ="vg_serie_nr_serv"
           )
         )
-      ),
+    ),
       # UI VISAO GERAL LICENÇAS -----------------------------------------------
       ###Caixinhas de infos gerais no submenu licenças
       #Total de licenças
